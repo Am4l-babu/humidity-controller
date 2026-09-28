@@ -13,6 +13,7 @@
 <p align="center">
   <b>Set a humidity. It holds it. If it isn't holding well, it tunes itself.</b><br>
   Connect to its Wi-Fi from any phone, drag a dial, and watch the room follow.<br><br>
+  <a href="https://am4l-babu.github.io/humidity-controller/"><b>▶ Live demo</b></a> ·
   <a href="#-try-it-in-30-seconds">Try it</a> ·
   <a href="#-build-it">Build it</a> ·
   <a href="#-how-it-works">How it works</a> ·
@@ -82,7 +83,9 @@ Below 720 px the tabs become a bottom bar and the cards stack.
 
 ## 🚀 Try it in 30 seconds
 
-You don't need any hardware to see the interface. Clone the repo and open one file:
+### ▶ [Open the live demo](https://am4l-babu.github.io/humidity-controller/)
+
+You don't need any hardware to see the interface. The link above runs the real dashboard in your browser against a simulated room. Or run it locally by cloning the repo and opening one file:
 
 ```bash
 git clone https://github.com/Am4l-babu/humidity-controller.git
