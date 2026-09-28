@@ -1,0 +1,1786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060a1c">
+<title>HygroPilot</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2s7 7.6 7 12.4a7 7 0 0 1-14 0C5 9.6 12 2 12 2z' fill='%2338e1ff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg0:#050817;--bg1:#0a1232;
+  --card-b:rgba(255,255,255,.085);--card-h:rgba(255,255,255,.16);
+  --tx:#eaf2ff;--tx2:#a3b3d1;--tx3:#6c7c9e;
+  --cy:#38e1ff;--te:#2dd4bf;--vi:#a78bfa;--am:#fbbf24;--or:#fb923c;--ro:#fb7185;--gr:#4ade80;
+  --hc:#38e1ff;--r:22px;color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{min-height:100vh;color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background:radial-gradient(1100px 700px at 75% -10%,#17295e 0%,transparent 60%),radial-gradient(900px 700px at -10% 110%,#1d1150 0%,transparent 55%),linear-gradient(180deg,var(--bg0),var(--bg1));background-attachment:fixed}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.app{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:14px 16px 110px}
+
+/* ---------- header ---------- */
+header.top{display:flex;align-items:center;gap:14px;padding:4px 0 18px}
+.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cy),var(--vi));box-shadow:0 8px 28px -6px rgba(56,225,255,.55);color:#06112a}
+.logo .ic{width:24px;height:24px;stroke-width:2.2}
+.brand b{display:block;font-size:18px;font-weight:700;letter-spacing:.2px}
+.brand small{color:var(--tx3);font-size:12px}
+.spacer{flex:1}
+nav.tabs{display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--card-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+nav.tabs button{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;color:var(--tx2);font-weight:550;font-size:14px;transition:.25s}
+nav.tabs button:hover{color:var(--tx)}
+nav.tabs button.on{background:linear-gradient(135deg,rgba(56,225,255,.22),rgba(167,139,250,.22));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.06);border:1px solid var(--card-b);white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--tx3)}
+.pill.live i{background:var(--gr);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:ping 2s infinite}
+.pill.demo i{background:var(--vi)}
+.pill.lost i{background:var(--ro);animation:blink 1s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}80%,100%{box-shadow:0 0 0 9px rgba(74,222,128,0)}}
+@keyframes blink{50%{opacity:.3}}
+.clock{color:var(--tx2);font-variant-numeric:tabular-nums;font-size:13px}
+
+/* ---------- common ---------- */
+.view{display:none;animation:rise .45s cubic-bezier(.2,.8,.2,1)}
+.view.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{position:relative;border-radius:var(--r);padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));border:1px solid var(--card-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 50px -24px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06)}
+.card h3{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:650;letter-spacing:.9px;text-transform:uppercase;color:var(--tx2);margin-bottom:14px}
+.card h3 .ic{width:18px;height:18px;color:var(--hc)}
+.card h3 .r{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500}
+.grid{display:grid;gap:16px}
+.muted{color:var(--tx3)}
+.num{font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:14px;font-weight:600;font-size:14px;background:rgba(255,255,255,.07);border:1px solid var(--card-b);transition:.2s}
+.btn:hover{background:rgba(255,255,255,.12);border-color:var(--card-h)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,var(--cy),#6d8bff);color:#051027;border:0;box-shadow:0 10px 30px -10px rgba(56,225,255,.6)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.warn{color:var(--ro);border-color:rgba(251,113,133,.35)}
+.btn.warn:hover{background:rgba(251,113,133,.12)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn .ic{width:18px;height:18px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:650;background:rgba(255,255,255,.07);color:var(--tx2)}
+.chip i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.hum{color:var(--cy);background:rgba(56,225,255,.12)}
+.chip.dry{color:var(--am);background:rgba(251,191,36,.12)}
+.chip.ok{color:var(--gr);background:rgba(74,222,128,.12)}
+.chip.bad{color:var(--ro);background:rgba(251,113,133,.14)}
+.chip.tune{color:var(--vi);background:rgba(167,139,250,.14)}
+.chip.hum i,.chip.dry i,.chip.tune i{animation:blink 1.4s infinite}
+
+/* ---------- dashboard ---------- */
+.dash{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+.hero{padding:22px 22px 20px}
+.hero-top{display:flex;align-items:center;justify-content:space-between}
+.eyebrow{font-size:13px;font-weight:650;letter-spacing:.9px;text-transform:uppercase;color:var(--tx2)}
+.dial-box{position:relative;width:min(100%,400px);aspect-ratio:1;margin:6px auto 0}
+#dial{width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none;border-radius:50%}
+#dial:active{cursor:grabbing}
+#dial:focus-visible{box-shadow:0 0 0 3px rgba(56,225,255,.35)}
+.dial-read{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-shadow:0 2px 18px rgba(0,0,0,.55)}
+.big{font-size:clamp(46px,13vw,76px);font-weight:250;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:.38em;font-weight:400;letter-spacing:0;margin-left:3px;color:var(--tx2)}
+.tgt{margin-top:8px;font-size:14px;color:var(--tx2)}
+.tgt b{color:#fff;font-weight:650}
+.delta{margin-top:4px;font-size:12.5px;font-weight:600;color:var(--tx3);min-height:18px}
+.dial-read.drag .tgt{transform:scale(1.25);transition:.15s}
+.sp-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px}
+.rb{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:300;background:rgba(255,255,255,.07);border:1px solid var(--card-b);transition:.2s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.rb:hover{background:rgba(255,255,255,.13)}
+.rb:active{transform:scale(.92);background:rgba(56,225,255,.2)}
+.sp-hint{font-size:12px;color:var(--tx3);text-align:center;max-width:210px}
+.presets{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 18px}
+.preset{padding:7px 12px;border-radius:12px;font-size:13px;background:rgba(255,255,255,.05);border:1px solid var(--card-b);color:var(--tx2);transition:.2s}
+.preset:hover{color:#fff;border-color:var(--card-h);transform:translateY(-1px)}
+.preset b{color:#fff;font-weight:650;margin-left:4px}
+.preset.on{border-color:var(--hc);color:#fff;background:rgba(56,225,255,.1)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px;border-radius:18px;background:rgba(0,0,0,.25);border:1px solid var(--card-b);position:relative}
+.seg button{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;font-size:12.5px;font-weight:600;color:var(--tx3);transition:color .25s}
+.seg button .ic{width:22px;height:22px}
+.seg button.on{color:#fff}
+.seg .glider{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;border-radius:14px;background:linear-gradient(135deg,rgba(56,225,255,.28),rgba(167,139,250,.28));box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 8px 24px -8px rgba(56,225,255,.5);transition:transform .35s cubic-bezier(.2,.8,.2,1),width .35s}
+.side{grid-template-columns:1fr 1fr}
+.side .wide{grid-column:1/-1}
+.stat-l{font-size:12.5px;color:var(--tx2);display:flex;align-items:center;gap:8px;font-weight:600}
+.stat-l .ic{width:18px;height:18px}
+.stat-v{font-size:34px;font-weight:300;letter-spacing:-.5px;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.stat-v small{font-size:.45em;color:var(--tx2);margin-left:2px}
+.stat-s{font-size:12.5px;color:var(--tx3)}
+.stat-s b{color:var(--tx2);font-weight:600}
+.thermo{height:6px;border-radius:6px;margin-top:12px;background:linear-gradient(90deg,#60a5fa,#2dd4bf 40%,#fbbf24 70%,#fb7185);position:relative}
+.thermo i,.cscale i{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0b1430;transform:translate(-50%,-50%);transition:left .8s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.obar{position:relative;height:12px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden;margin:12px 0 6px}
+.obar .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:rgba(255,255,255,.25);z-index:1}
+.ofill{position:absolute;top:0;bottom:0;left:50%;width:0;border-radius:8px;transition:left .6s,width .6s,background .6s}
+.olab{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3)}
+.relays{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.relay{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:10px;font-size:12px;font-weight:600;background:rgba(255,255,255,.05);color:var(--tx3);border:1px solid transparent;transition:.3s}
+.relay i{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.5}
+.relay.on{color:var(--cy);border-color:rgba(56,225,255,.35);background:rgba(56,225,255,.1)}
+.relay.on.d{color:var(--am);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.1)}
+.relay.on i{opacity:1;animation:ping2 1.2s infinite}
+@keyframes ping2{0%{box-shadow:0 0 0 0 currentColor}100%{box-shadow:0 0 0 7px transparent}}
+.zone-n{font-size:24px;font-weight:600;margin:6px 0 2px;color:var(--hc);transition:color 1s}
+.cscale{position:relative;height:6px;border-radius:6px;margin:16px 0 8px;background:linear-gradient(90deg,#fbbf24 0%,#facc15 30%,#2dd4bf 40%,#2dd4bf 60%,#38bdf8 70%,#818cf8 100%)}
+.cscale b{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--vi);border-radius:2px;transition:left .8s}
+.alarm{display:none;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;border-radius:16px;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35);color:#ffd1d8;font-weight:600}
+.alarm.on{display:flex;animation:rise .4s}
+.alarm .ic{color:var(--ro)}
+.tiles{grid-template-columns:repeat(2,1fr)}
+.tile{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--card-b)}
+.tile small{display:block;font-size:11.5px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.tile b{display:block;font-size:20px;font-weight:500;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--tx3)}
+
+/* ---------- charts ---------- */
+.chart{position:relative;width:100%;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.chart canvas{display:block;width:100%}
+.tip{position:absolute;top:8px;pointer-events:none;padding:10px 12px;border-radius:12px;font-size:12.5px;background:rgba(9,15,38,.92);border:1px solid var(--card-h);box-shadow:0 12px 30px -10px rgba(0,0,0,.7);opacity:0;transition:opacity .15s;white-space:nowrap;z-index:2}
+.tip.on{opacity:1}
+.tip .tt{color:var(--tx3);margin-bottom:4px;font-weight:600}
+.tip div{display:flex;align-items:center;gap:8px}
+.tip i{width:8px;height:8px;border-radius:3px}
+.tip b{margin-left:auto;padding-left:14px;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.lg{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:10px;font-size:12px;font-weight:600;color:var(--tx2);background:rgba(255,255,255,.05);transition:.2s}
+.lg i{width:10px;height:3px;border-radius:2px}
+.lg.off{opacity:.4;text-decoration:line-through}
+.chart-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.chart-head h3{margin:0}
+.zoomhint{font-size:11.5px;color:var(--tx3)}
+
+/* ---------- tuning ---------- */
+.tune{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:start}
+.field{margin-bottom:18px}
+.field-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.field-top label{font-weight:600;font-size:14px}
+.field-top label small{display:block;font-weight:400;font-size:12px;color:var(--tx3)}
+.nin{width:104px;padding:7px 10px;border-radius:10px;border:1px solid var(--card-b);background:rgba(0,0,0,.28);text-align:right;font-variant-numeric:tabular-nums;outline:none;transition:.2s}
+.nin:focus,.tin:focus{border-color:var(--cy);box-shadow:0 0 0 3px rgba(56,225,255,.15)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(255,255,255,.1);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid var(--cy);box-shadow:0 0 0 4px rgba(56,225,255,.15);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:4px solid var(--cy);cursor:pointer}
+.derived{display:flex;gap:10px;margin:-4px 0 18px}
+.derived div{flex:1;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);font-size:12px;color:var(--tx3)}
+.derived b{display:block;color:var(--tx);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.row3 .nin{width:100%}
+.row3 label{display:block;font-size:12px;color:var(--tx3);margin-bottom:6px;font-weight:600}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.terms .term{display:grid;grid-template-columns:78px 1fr 64px;align-items:center;gap:12px;margin:10px 0;font-size:13px}
+.terms .term span:first-child{color:var(--tx2);font-weight:600}
+.terms .term b{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.tbar{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden}
+.tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.25)}
+.tbar i{position:absolute;top:0;bottom:0;left:50%;border-radius:6px;transition:left .5s,width .5s}
+#tape{width:100%;height:44px;display:block;margin-top:8px}
+.rules{display:grid;gap:8px;margin:4px 0 16px}
+.rule{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid var(--card-b);text-align:left;transition:.2s}
+.rule:hover{border-color:var(--card-h)}
+.rule.on{border-color:rgba(167,139,250,.6);background:rgba(167,139,250,.1)}
+.rule .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--tx3);flex:none;transition:.2s}
+.rule.on .dot{border:5px solid var(--vi)}
+.rule b{display:block;font-size:14px}
+.rule small{color:var(--tx3);font-size:12px}
+.rule .rec{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--vi);background:rgba(167,139,250,.14);padding:3px 8px;border-radius:8px;letter-spacing:.4px}
+.at-run{display:grid;grid-template-columns:140px 1fr;gap:20px;align-items:center}
+.ring{position:relative;width:140px;height:140px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .spin{position:absolute;inset:0;border-radius:50%;border:2px solid transparent;border-top-color:rgba(167,139,250,.7);animation:spin 1.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .c b{font-size:30px;font-weight:300}
+.ring .c small{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035)}
+.kv small{display:block;font-size:11.5px;color:var(--tx3)}
+.kv b{font-weight:600;font-variant-numeric:tabular-nums}
+.note{padding:12px 14px;border-radius:14px;font-size:13px;color:var(--tx2);background:rgba(56,225,255,.06);border:1px solid rgba(56,225,255,.18);margin-bottom:16px}
+.note.err{background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.3);color:#ffd1d8}
+.note.good{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.3);color:#d3ffe2}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--tx3);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-bottom:1px solid var(--card-b)}
+td{padding:9px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-variant-numeric:tabular-nums}
+tr.cur td{color:var(--vi)}
+td .btn{padding:5px 10px;font-size:12px;border-radius:10px}
+
+/* ---------- analysis ---------- */
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.chips{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--card-b)}
+.chips button{padding:7px 13px;border-radius:10px;font-size:13px;font-weight:600;color:var(--tx3);transition:.2s}
+.chips button.on{background:rgba(255,255,255,.1);color:#fff}
+.kpis{grid-template-columns:repeat(4,1fr)}
+.kpi{padding:16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid var(--card-b)}
+.kpi small{display:block;font-size:11.5px;color:var(--tx3);font-weight:650;text-transform:uppercase;letter-spacing:.6px}
+.kpi b{display:block;font-size:24px;font-weight:400;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--tx3)}
+.ana2{grid-template-columns:260px minmax(0,1fr)}
+.score{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.score .ring{width:170px;height:170px}
+.score .c b{font-size:44px;font-weight:250}
+.grade{margin-top:12px;font-size:14px;color:var(--tx2)}
+.grade b{font-size:18px;color:#fff}
+.insights{list-style:none;display:grid;gap:10px}
+.insights li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.035);font-size:14px;color:var(--tx2);line-height:1.5}
+.insights li b{color:var(--tx)}
+.insights .ic{margin-top:1px;color:var(--cy)}
+.insights li.w .ic{color:var(--am)}
+.insights li.g .ic{color:var(--gr)}
+.ana3{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+#histo,#rhythm{width:100%;display:block}
+
+/* ---------- settings ---------- */
+.sets{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.tin{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--card-b);background:rgba(0,0,0,.28);outline:none;transition:.2s}
+.fl{display:block;font-size:12.5px;color:var(--tx2);font-weight:600;margin:0 0 6px}
+.fg{margin-bottom:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
+.sw input{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:26px;background:rgba(255,255,255,.12);position:relative;cursor:pointer;transition:.25s;flex:none}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.sw input:checked{background:var(--cy)}
+.sw input:checked::after{left:23px}
+.sys{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sys div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);font-size:12px;color:var(--tx3)}
+.sys b{display:block;font-size:14px;color:var(--tx);font-weight:600;font-variant-numeric:tabular-nums;word-break:break-all}
+.pw{position:relative}
+.pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);padding:4px 8px}
+
+/* ---------- toasts / misc ---------- */
+#toasts{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;display:grid;gap:8px;justify-items:center;pointer-events:none}
+.toast{padding:11px 18px;border-radius:14px;font-size:14px;font-weight:550;background:rgba(12,20,48,.95);border:1px solid var(--card-h);box-shadow:0 18px 40px -12px rgba(0,0,0,.7);animation:rise .3s;transition:.35s}
+.toast.ok{border-color:rgba(74,222,128,.4)}
+.toast.err{border-color:rgba(251,113,133,.5);color:#ffd1d8}
+.toast.out{opacity:0;transform:translateY(8px)}
+.demo-bar{display:none;margin-bottom:16px;padding:10px 16px;border-radius:14px;font-size:13px;color:#e4dcff;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3)}
+.demo-bar.on{display:block}
+#report{display:none}
+footer{margin-top:28px;text-align:center;font-size:12px;color:var(--tx3)}
+
+/* ---------- responsive ---------- */
+@media (max-width:980px){
+  .dash,.tune,.ana3,.sets{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:720px){
+  .app{padding:12px 16px 110px}
+  nav.tabs{position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:40;justify-content:space-around;background:rgba(10,16,42,.85);box-shadow:0 18px 40px -10px rgba(0,0,0,.8)}
+  nav.tabs button{flex-direction:column;gap:3px;padding:8px 10px;font-size:11px;flex:1}
+  .clock{display:none}
+  .ana2{grid-template-columns:minmax(0,1fr)}
+  .at-run{grid-template-columns:minmax(0,1fr);justify-items:center}
+  .at-run .kv{width:100%}
+  .card{padding:16px}
+  .hero{padding:18px 14px}
+}
+@media (max-width:420px){
+  .side{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .kpi b{font-size:20px}
+  .seg button{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- print report ---------- */
+@media print{
+  body{background:#fff!important;color:#111}
+  #bg,.app,#toasts{display:none!important}
+  #report{display:block!important;padding:0 8mm;font:12px/1.5 system-ui,Arial,sans-serif;color:#111}
+  #report h1{font-size:22px;margin-bottom:2px}
+  #report h2{font-size:14px;margin:18px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px}
+  #report img{width:100%;border:1px solid #ddd;border-radius:6px}
+  #report table{font-size:12px}
+  #report th,#report td{color:#111;border-color:#ddd;padding:5px 6px}
+  #report ul{padding-left:18px}
+  #report li{margin:4px 0}
+  #report .sub{color:#555}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6.5 7 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10 12 3 12 3z"/></symbol>
+  <symbol id="i-hum" viewBox="0 0 24 24"><path d="M12 3s6.5 7 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10 12 3 12 3z"/><path d="M12 11.5v6M9 14.5h6"/></symbol>
+  <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 11v6"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/></symbol>
+  <symbol id="i-tune" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M5 16l4-5 3.5 3L19 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></symbol>
+  <symbol id="i-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2C12 6 13 3 15.5 3s3 4.5-2 7.6M13.8 12c4.2 0 7.2 1 7.2 3.5s-4.5 3-7.6-2M12 13.8c0 4.2-1 7.2-3.5 7.2s-3-4.5 2-7.6M10.2 12C6 12 3 11 3 8.5s4.5-3 7.6 2"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 20c0-9.5 6-15 15-15 0 9.5-5.5 15-14.5 15"/><path d="M5 20l8.5-8.5"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.5h10V9M7 17.5H4.5V10h15v7.5H17"/><path d="M7 14h10v7H7z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5l11 6.5-11 6.5z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a5 5 0 0 1 6.4 0"/><circle cx="12" cy="19.3" r=".9"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.2v.1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.8-5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/></symbol>
+  <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></symbol>
+</svg>
+
+<canvas id="bg"></canvas>
+
+<div class="app">
+  <header class="top">
+    <div class="logo"><svg class="ic"><use href="#i-drop"/></svg></div>
+    <div class="brand"><b>HygroPilot</b><small>PID humidity controller</small></div>
+    <div class="spacer"></div>
+    <nav class="tabs" id="tabs">
+      <button data-v="dash" class="on"><svg class="ic"><use href="#i-dash"/></svg>Dashboard</button>
+      <button data-v="tune"><svg class="ic"><use href="#i-tune"/></svg>Tuning</button>
+      <button data-v="ana"><svg class="ic"><use href="#i-chart"/></svg>Analysis</button>
+      <button data-v="set"><svg class="ic"><use href="#i-gear"/></svg>Settings</button>
+    </nav>
+    <div class="spacer"></div>
+    <span class="clock" id="clock"></span>
+    <span class="pill" id="conn"><i></i><span>Connecting…</span></span>
+  </header>
+
+  <div class="demo-bar" id="demoBar"><b>Demo mode</b> — no controller found, so a simulated room and humidifier are running in your browser. Everything is interactive, including auto-tune.</div>
+  <div class="alarm" id="alarm"><svg class="ic"><use href="#i-warn"/></svg><span id="alarmTx"></span></div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section class="view on" id="v-dash">
+    <div class="grid dash">
+      <div class="card hero">
+        <div class="hero-top">
+          <span class="eyebrow">Relative humidity</span>
+          <span class="chip" id="stateChip"><i></i><span>—</span></span>
+        </div>
+        <div class="dial-box">
+          <canvas id="dial" tabindex="0" role="slider" aria-label="Target humidity" aria-valuemin="5" aria-valuemax="95"></canvas>
+          <div class="dial-read" id="dialRead">
+            <div class="big"><span id="hVal">--</span><small>%</small></div>
+            <div class="tgt">target <b id="spVal">--</b>%</div>
+            <div class="delta" id="dVal"></div>
+          </div>
+        </div>
+        <div class="sp-row">
+          <button class="rb" id="spMinus" aria-label="Lower target">−</button>
+          <div class="sp-hint">Drag the glowing knob, scroll, or tap ± to set the target</div>
+          <button class="rb" id="spPlus" aria-label="Raise target">+</button>
+        </div>
+        <div class="presets" id="presets"></div>
+        <div class="seg" id="modeSeg">
+          <div class="glider"></div>
+          <button data-m="0"><svg class="ic"><use href="#i-power"/></svg>Off</button>
+          <button data-m="1"><svg class="ic"><use href="#i-hum"/></svg>Humidify</button>
+          <button data-m="2"><svg class="ic"><use href="#i-fan"/></svg>Dehumidify</button>
+          <button data-m="3"><svg class="ic"><use href="#i-auto"/></svg>Auto</button>
+        </div>
+      </div>
+
+      <div class="grid side">
+        <div class="card">
+          <div class="stat-l"><svg class="ic" style="color:var(--or)"><use href="#i-thermo"/></svg>Temperature</div>
+          <div class="stat-v"><span id="tVal">--</span><small>°C</small></div>
+          <div class="stat-s">Dew point <b id="dpVal">--</b> °C</div>
+          <div class="stat-s">Absolute <b id="ahVal">--</b> g/m³</div>
+          <div class="thermo"><i id="tMark" style="left:50%"></i></div>
+        </div>
+        <div class="card">
+          <div class="stat-l"><svg class="ic" style="color:var(--te)"><use href="#i-zap"/></svg>Output</div>
+          <div class="stat-v"><span id="uVal">--</span><small>%</small></div>
+          <div class="stat-s" id="uTx">—</div>
+          <div class="obar"><div class="mid"></div><div class="ofill" id="oFill"></div></div>
+          <div class="olab"><span>Dry</span><span>Humidify</span></div>
+          <div class="relays">
+            <span class="relay" id="rH"><i></i>Humidifier</span>
+            <span class="relay d" id="rD"><i></i>Dehumidifier</span>
+          </div>
+        </div>
+        <div class="card wide">
+          <div class="stat-l"><svg class="ic" style="color:var(--gr)"><use href="#i-leaf"/></svg>Climate
+            <span class="muted" style="margin-left:auto;font-weight:500" id="etaVal"></span></div>
+          <div class="zone-n" id="zoneN">—</div>
+          <div class="stat-s" id="zoneD">Waiting for sensor…</div>
+          <div class="cscale"><b id="csT" style="left:55%"></b><i id="csH" style="left:50%"></i></div>
+          <div class="olab"><span>0%</span><span>Comfort 40–60%</span><span>100%</span></div>
+        </div>
+        <div class="grid tiles wide">
+          <div class="tile"><small>Humidifier on</small><b id="kHon">--</b><span id="kHsw">--</span></div>
+          <div class="tile"><small>Dehumidifier on</small><b id="kDon">--</b><span id="kDsw">--</span></div>
+          <div class="tile"><small>Uptime</small><b id="kUp">--</b><span id="kCli">--</span></div>
+          <div class="tile"><small>Trend</small><b id="kTr">--</b><span>last 2 min</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="chart-head">
+        <h3><svg class="ic"><use href="#i-chart"/></svg>Live · last 20 minutes</h3>
+        <div class="legend" id="liveLegend"></div>
+      </div>
+      <div id="liveChart"></div>
+    </div>
+  </section>
+
+  <!-- ===================== TUNING ===================== -->
+  <section class="view" id="v-tune">
+    <div class="grid tune">
+      <div class="grid">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-tune"/></svg>PID gains <span class="r muted" id="pidState"></span></h3>
+          <div class="field"><div class="field-top"><label>Proportional · Kp<small>% output per %RH of error</small></label><input class="nin" id="kp" type="number" inputmode="decimal"></div><input type="range" id="kpR"></div>
+          <div class="field"><div class="field-top"><label>Integral · Ki<small>% output per %RH·second</small></label><input class="nin" id="ki" type="number" inputmode="decimal"></div><input type="range" id="kiR"></div>
+          <div class="field"><div class="field-top"><label>Derivative · Kd<small>% output·seconds per %RH</small></label><input class="nin" id="kd" type="number" inputmode="decimal"></div><input type="range" id="kdR"></div>
+          <div class="derived">
+            <div>Integral time Ti<b id="tiV">--</b></div>
+            <div>Derivative time Td<b id="tdV">--</b></div>
+          </div>
+          <div class="field"><div class="field-top"><label>Output window<small>Relay time-proportioning period (s)</small></label><input class="nin" id="win" type="number" inputmode="numeric"></div><input type="range" id="winR"></div>
+          <div class="row3">
+            <div><label for="mon">Min ON (s)</label><input class="nin" id="mon" type="number" inputmode="numeric"></div>
+            <div><label for="moff">Min OFF (s)</label><input class="nin" id="moff" type="number" inputmode="numeric"></div>
+            <div><label>&nbsp;</label><span class="muted" style="font-size:12px">Protects relays &amp; compressors</span></div>
+          </div>
+          <input type="range" id="monR" hidden><input type="range" id="moffR" hidden>
+          <div class="actions">
+            <button class="btn pri" id="pidSave" disabled>Save gains</button>
+            <button class="btn" id="pidRevert" disabled>Revert</button>
+          </div>
+        </div>
+
+        <div class="card terms">
+          <h3><svg class="ic"><use href="#i-cal"/></svg>Live loop <span class="r muted num" id="errV"></span></h3>
+          <div class="term"><span>P · now</span><div class="tbar"><i id="bP"></i></div><b id="vP">--</b></div>
+          <div class="term"><span>I · past</span><div class="tbar"><i id="bI"></i></div><b id="vI">--</b></div>
+          <div class="term"><span>D · future</span><div class="tbar"><i id="bD"></i></div><b id="vD">--</b></div>
+          <div class="term"><span style="color:#fff">Output</span><div class="tbar"><i id="bU"></i></div><b id="vU">--</b></div>
+          <div class="muted" style="font-size:12px;margin-top:14px">Relay activity · last 5 min</div>
+          <canvas id="tape"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-spark"/></svg>Auto-tune <span class="r" id="atChip"></span></h3>
+
+        <div id="atIdle">
+          <div class="note" id="atNote">The auto-tuner switches the output fully on and off around your target, measures the oscillation it creates, and calculates PID gains from it. It usually takes 3–5 cycles, from a few minutes for a small box to an hour or more for a room.</div>
+          <div class="fl">Tuning rule</div>
+          <div class="rules" id="rules"></div>
+          <div class="field">
+            <div class="field-top"><label>Noise band<small>Hysteresis around the target, larger than sensor noise</small></label><b class="num" id="bandV">--</b></div>
+            <input type="range" id="band" min="0.2" max="3" step="0.1">
+          </div>
+          <div class="actions"><button class="btn pri" id="atStart"><svg class="ic"><use href="#i-play"/></svg>Start auto-tune</button></div>
+        </div>
+
+        <div id="atRun" hidden>
+          <div class="at-run">
+            <div class="ring">
+              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle id="atArc" cx="60" cy="60" r="52" stroke="url(#gV)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition:stroke-dashoffset .8s"/><defs><linearGradient id="gV"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#38e1ff"/></linearGradient></defs></svg>
+              <div class="spin"></div>
+              <div class="c"><b id="atCyc">0</b><small>cycles</small></div>
+            </div>
+            <div class="kv">
+              <div><small>Elapsed</small><b id="atEl">--</b></div>
+              <div><small>Output</small><b id="atRel">--</b></div>
+              <div><small>Amplitude</small><b id="atAmp">--</b></div>
+              <div><small>Period</small><b id="atPer">--</b></div>
+            </div>
+          </div>
+          <div class="muted" style="font-size:12.5px;margin:16px 0 8px" id="atMsg"></div>
+          <div id="tuneChart"></div>
+          <div class="actions"><button class="btn warn" id="atStop"><svg class="ic"><use href="#i-stop"/></svg>Stop auto-tune</button></div>
+        </div>
+
+        <div id="atRes" hidden style="margin-top:22px">
+          <div class="fl">Last result · Ku <b class="num" id="kuV">--</b> · Tu <b class="num" id="tuV">--</b></div>
+          <table><thead><tr><th>Rule</th><th>Kp</th><th>Ki</th><th>Kd</th><th></th></tr></thead><tbody id="resBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ANALYSIS ===================== -->
+  <section class="view" id="v-ana">
+    <div class="toolbar">
+      <div class="chips" id="ranges">
+        <button data-r="20m">20 min</button><button data-r="1h">1 h</button><button data-r="6h">6 h</button><button data-r="24h" class="on">24 h</button><button data-r="7d">7 days</button>
+      </div>
+      <div class="chips" id="tols" title="Tolerance band used for statistics">
+        <button data-t="1">±1%</button><button data-t="2" class="on">±2%</button><button data-t="5">±5%</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="csvBtn"><svg class="ic"><use href="#i-dl"/></svg>CSV</button>
+      <button class="btn pri" id="repBtn"><svg class="ic"><use href="#i-print"/></svg>Report</button>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <h3><svg class="ic"><use href="#i-chart"/></svg><span id="anaTitle">History</span></h3>
+        <div class="legend" id="anaLegend"></div>
+        <div class="spacer"></div>
+        <span class="zoomhint" id="zoomHint">Drag across the chart to zoom · double-click to reset</span>
+      </div>
+      <div id="anaChart"></div>
+    </div>
+
+    <div class="grid ana2" style="margin-top:16px">
+      <div class="card score">
+        <h3 style="align-self:flex-start"><svg class="ic"><use href="#i-shield"/></svg>Control score</h3>
+        <div class="ring">
+          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.08)" stroke-width="9" fill="none"/><circle id="scArc" cx="60" cy="60" r="52" stroke="url(#gS)" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/><defs><linearGradient id="gS"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#38e1ff"/></linearGradient></defs></svg>
+          <div class="c"><b id="scV">--</b><small>of 100</small></div>
+        </div>
+        <div class="grade">Grade <b id="scG">—</b></div>
+      </div>
+      <div class="grid kpis" id="kpis"></div>
+    </div>
+
+    <div class="grid ana3" style="margin-top:16px">
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-spark"/></svg>Insights</h3>
+        <ul class="insights" id="insights"></ul>
+      </div>
+      <div class="grid">
+        <div class="card"><h3><svg class="ic"><use href="#i-drop"/></svg>Humidity distribution</h3><canvas id="histo" height="190"></canvas></div>
+        <div class="card"><h3><svg class="ic"><use href="#i-clock"/></svg>Daily rhythm · 7 days <span class="r muted" id="rhyTx"></span></h3><canvas id="rhythm" height="260"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section class="view" id="v-set">
+    <div class="grid sets">
+      <form class="card" id="fNet" autocomplete="off">
+        <h3><svg class="ic"><use href="#i-wifi"/></svg>Wi-Fi access point</h3>
+        <div class="fg"><label class="fl" for="sSsid">Network name (SSID)</label><input class="tin" id="sSsid" maxlength="32" required></div>
+        <div class="fg pw"><label class="fl" for="sPass">Password (8–63 characters, empty = open)</label><input class="tin" id="sPass" type="password" maxlength="63"><button type="button" id="pwEye" style="top:70%">show</button></div>
+        <div class="note">Saving restarts the access point, so reconnect to the new network afterwards.</div>
+        <button class="btn pri" type="submit">Save &amp; restart Wi-Fi</button>
+      </form>
+
+      <form class="card" id="fSafe">
+        <h3><svg class="ic"><use href="#i-shield"/></svg>Safety &amp; calibration</h3>
+        <div class="two">
+          <div class="fg"><label class="fl" for="sAlo">Low alarm (%RH)</label><input class="tin num" id="sAlo" type="number" step="0.5" min="0" max="99"></div>
+          <div class="fg"><label class="fl" for="sAhi">High alarm (%RH)</label><input class="tin num" id="sAhi" type="number" step="0.5" min="1" max="100"></div>
+          <div class="fg"><label class="fl" for="sHoff">Humidity offset (%RH)</label><input class="tin num" id="sHoff" type="number" step="0.1" min="-20" max="20"></div>
+          <div class="fg"><label class="fl" for="sToff">Temperature offset (°C)</label><input class="tin num" id="sToff" type="number" step="0.1" min="-10" max="10"></div>
+        </div>
+        <div class="muted" style="font-size:12.5px;margin-bottom:10px">Above the high alarm the humidifier is forced off; below the low alarm the dehumidifier is forced off.</div>
+        <label class="sw"><span>Rotate OLED 180°</span><input type="checkbox" id="sFlip"></label>
+        <button class="btn pri" type="submit">Save</button>
+      </form>
+
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-clock"/></svg>Time &amp; data</h3>
+        <div class="sys" style="margin-bottom:16px">
+          <div>Controller time<b id="sysTime">--</b></div>
+          <div>History<b id="sysHist">1 min · 24 h &amp; 30 min · 7 days</b></div>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <button class="btn" id="btnSync"><svg class="ic"><use href="#i-clock"/></svg>Sync time from this device</button>
+          <button class="btn" id="btnBackup"><svg class="ic"><use href="#i-dl"/></svg>Export settings</button>
+          <button class="btn warn" id="btnClear">Clear history</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-chip"/></svg>System</h3>
+        <div class="sys">
+          <div>Firmware<b id="sysFw">--</b></div>
+          <div>Uptime<b id="sysUp">--</b></div>
+          <div>Free memory<b id="sysHeap">--</b></div>
+          <div>Wi-Fi clients<b id="sysCli">--</b></div>
+          <div>Chip ID<b id="sysChip">--</b></div>
+          <div>Flash<b id="sysFlash">--</b></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnReboot"><svg class="ic"><use href="#i-power"/></svg>Restart</button>
+          <button class="btn warn" id="btnFactory">Factory reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>HygroPilot · ESP8266 · <span id="footIp">192.168.4.1</span></footer>
+</div>
+
+<div id="toasts"></div>
+<div id="report"></div>
+
+<script>
+'use strict';
+/* ================================================================ utilities */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MODES = ['Off', 'Humidify', 'Dehumidify', 'Auto'];
+// [name, kp·Ku, ti·Tu, td·Tu, description]  — keep in sync with TUNE_RULES in control.h
+const RULES = [
+  ['Ziegler-Nichols', .6, .5, .125, 'Fast and aggressive, expect overshoot'],
+  ['Tyreus-Luyben', .454, 2.2, .159, 'Gentle and robust, suits slow humidity loops'],
+  ['Pessen Integral', .7, .4, .15, 'Very quick disturbance rejection'],
+  ['Some Overshoot', .333, .5, .333, 'Balanced speed and stability'],
+  ['No Overshoot', .2, .5, .333, 'Slow, never overshoots the target'],
+  ['Ziegler-Nichols PI', .45, .833, 0, 'No derivative, tolerant of noisy sensors'],
+];
+function gains(r, ku, tu) {
+  const R = RULES[r], kp = R[1] * ku, ti = R[2] * tu, td = R[3] * tu;
+  return { kp, ki: ti > 0 ? kp / ti : 0, kd: kp * td };
+}
+const PRESETS = [['🛋️', 'Comfort', 45], ['😴', 'Sleep', 50], ['🎸', 'Wood', 42], ['🌿', 'Plants', 60], ['🌴', 'Tropical', 70], ['🍄', 'Fungi', 80]];
+
+// humidity -> hue: amber (dry) -> teal (comfort) -> blue/violet (humid)
+const HUE = [[0, 30], [30, 42], [40, 168], [60, 188], [72, 212], [100, 258]];
+function hueOf(h) {
+  h = clamp(h || 0, 0, 100);
+  for (let i = 1; i < HUE.length; i++) if (h <= HUE[i][0]) {
+    const [a, ha] = HUE[i - 1], [b, hb] = HUE[i];
+    return ha + (hb - ha) * (h - a) / (b - a);
+  }
+  return 258;
+}
+const col = (h, l = 62, a = 1) => `hsla(${hueOf(h).toFixed(0)},92%,${l}%,${a})`;
+
+const f1 = v => v == null || isNaN(v) ? '--' : (+v).toFixed(1);
+const fx = (v, d) => v == null || isNaN(v) ? '--' : (+v).toFixed(d);
+const sign = (v, d = 1) => v == null || isNaN(v) ? '--' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d);
+function dur(s) {
+  s = Math.max(0, Math.round(s));
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + 'm';
+  return Math.floor(s / 86400) + 'd ' + Math.floor(s % 86400 / 3600) + 'h';
+}
+function tfmt(ts, date) {
+  if (ts < 1e9) return 'T+' + dur(ts);
+  const d = new Date(ts * 1000);
+  const t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date ? d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + t : t;
+}
+function dewPoint(t, rh) {
+  if (t == null || rh == null || rh <= 0) return NaN;
+  const a = 17.62, b = 243.12, g = Math.log(rh / 100) + a * t / (b + t);
+  return b * g / (a - g);
+}
+const absHum = (t, rh) => 6.112 * Math.exp(17.67 * t / (t + 243.5)) * rh * 2.1674 / (273.15 + t);
+function nice(lo, hi, n) {
+  const raw = (hi - lo) / n || 1, mag = Math.pow(10, Math.floor(Math.log10(raw))), nr = raw / mag;
+  const step = (nr < 1.5 ? 1 : nr < 3 ? 2 : nr < 7 ? 5 : 10) * mag;
+  return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step };
+}
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+function toast(msg, type = 'ok') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type; t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.classList.add('out'), 2600);
+  setTimeout(() => t.remove(), 3000);
+}
+function download(name, text, type = 'text/csv') {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function parseCSV(txt) {
+  const meta = {}, rows = [];
+  for (const ln of String(txt).split('\n')) {
+    if (!ln) continue;
+    if (ln[0] === '#') { ln.slice(1).split(',').forEach(kv => { const [k, v] = kv.split('='); meta[k] = +v; }); continue; }
+    const p = ln.split(',');
+    if (p.length < 5) continue;
+    rows.push({ ts: +p[0], t: p[1] / 10, h: p[2] / 10, o: +p[3], sp: p[4] / 2 });
+  }
+  return { meta, rows };
+}
+
+/* ================================================================ API (device or simulator) */
+const API = {
+  demo: false, q: Promise.resolve(),
+  // ESP8266WebServer handles one client at a time: serialise requests.
+  req(p, o = {}) {
+    const run = async () => {
+      const c = new AbortController(), t = setTimeout(() => c.abort(), 8000);
+      try {
+        const r = await fetch(p, { ...o, signal: c.signal, cache: 'no-store' });
+        const txt = await r.text();
+        let j; try { j = JSON.parse(txt); } catch (e) { j = txt; }
+        if (!r.ok) throw new Error((j && j.err) || 'HTTP ' + r.status);
+        return j;
+      } finally { clearTimeout(t); }
+    };
+    const p2 = this.q.then(run, run);
+    this.q = p2.catch(() => {});
+    return p2;
+  },
+  get(p) { return this.demo ? Sim.get(p) : this.req(p); },
+  post(p, d = {}) { return this.demo ? Sim.post(p, d) : this.req(p, { method: 'POST', body: new URLSearchParams(d) }); },
+};
+
+/* ================================================================ state */
+let S = null, CFG = null, pollFails = 0, timeSent = false, view = 'dash';
+const LIVE = [], TAPE = [], TUNE = [];
+
+/* ================================================================ background mist */
+const Mist = {
+  init() {
+    this.cv = $('#bg'); this.c = this.cv.getContext('2d'); this.h = 50; this.hue = -1; this.ps = [];
+    this.sprite = document.createElement('canvas'); this.sprite.width = this.sprite.height = 128;
+    const n = innerWidth < 700 ? 18 : 30;
+    for (let i = 0; i < n; i++) this.ps.push({ x: Math.random(), y: Math.random(), r: 60 + Math.random() * 160, vx: (Math.random() - .5) * .00012, vy: -.00004 - Math.random() * .00012, ph: Math.random() * 6.28 });
+    addEventListener('resize', () => this.resize()); this.resize();
+    if (RM) this.draw(0); else requestAnimationFrame(t => this.loop(t));
+  },
+  resize() { const d = Math.min(devicePixelRatio || 1, 1.5); this.w = innerWidth; this.hh = innerHeight; this.cv.width = this.w * d; this.cv.height = this.hh * d; this.c.setTransform(d, 0, 0, d, 0, 0); },
+  tint() {
+    const hue = Math.round(hueOf(this.h) / 6) * 6;
+    if (hue === this.hue) return; this.hue = hue;
+    const c = this.sprite.getContext('2d'), g = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, `hsla(${hue},90%,70%,.55)`); g.addColorStop(.5, `hsla(${hue},90%,60%,.16)`); g.addColorStop(1, `hsla(${hue},90%,55%,0)`);
+    c.clearRect(0, 0, 128, 128); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
+  },
+  last: 0,
+  loop(t) {
+    requestAnimationFrame(t2 => this.loop(t2));
+    if (document.hidden || t - this.last < 40) return;
+    this.draw(t - this.last > 200 ? 40 : t - this.last); this.last = t;
+  },
+  draw(dt) {
+    this.tint();
+    const c = this.c, dens = .15 + clamp(this.h, 0, 100) / 100 * .55;
+    c.clearRect(0, 0, this.w, this.hh);
+    for (const p of this.ps) {
+      p.x += p.vx * dt; p.y += p.vy * dt; p.ph += dt * .0004;
+      if (p.y < -.2) { p.y = 1.2; p.x = Math.random(); }
+      if (p.x < -.2) p.x = 1.2; if (p.x > 1.2) p.x = -.2;
+      c.globalAlpha = dens * (.55 + .45 * Math.sin(p.ph));
+      const r = p.r * (1 + .15 * Math.sin(p.ph * 1.3));
+      c.drawImage(this.sprite, p.x * this.w - r, p.y * this.hh - r, r * 2, r * 2);
+    }
+    c.globalAlpha = 1;
+  },
+};
+
+/* ================================================================ humidity dial */
+const A0 = Math.PI * .75, SW = Math.PI * 1.5;
+const Dial = {
+  init() {
+    this.cv = $('#dial'); this.c = this.cv.getContext('2d');
+    this.h = null; this.hs = 50; this.sp = 55; this.drag = false; this.hr = 0; this.dr = 0; this.ph = 0; this.bub = []; this.pend = null;
+    new ResizeObserver(() => this.resize()).observe(this.cv); this.resize();
+    const cv = this.cv;
+    cv.addEventListener('pointerdown', e => {
+      const p = this.pt(e), g = this.g, d = Math.hypot(p.x - g.cx, p.y - g.cy);
+      if (d < g.r * .92 || d > g.R + g.lw * 1.6) return;
+      this.drag = true; cv.setPointerCapture(e.pointerId); $('#dialRead').classList.add('drag');
+      this.setSp(this.valAt(p.x, p.y)); e.preventDefault();
+    });
+    cv.addEventListener('pointermove', e => { if (this.drag) { const p = this.pt(e); this.setSp(this.valAt(p.x, p.y)); } });
+    const end = () => { if (!this.drag) return; this.drag = false; $('#dialRead').classList.remove('drag'); commitSp(this.sp, 0); };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+    cv.addEventListener('wheel', e => {
+      const p = this.pt(e), g = this.g, d = Math.hypot(p.x - g.cx, p.y - g.cy);
+      if (d < g.r * .92 && document.activeElement !== cv) return;
+      e.preventDefault(); this.setSp(this.sp + (e.deltaY < 0 ? .5 : -.5)); commitSp(this.sp, 700); }, { passive: false });
+    cv.addEventListener('keydown', e => {
+      const k = { ArrowUp: .5, ArrowRight: .5, ArrowDown: -.5, ArrowLeft: -.5, PageUp: 5, PageDown: -5 }[e.key];
+      if (k) { e.preventDefault(); this.setSp(this.sp + k); commitSp(this.sp, 700); }
+    });
+    if (RM) this.draw(); else requestAnimationFrame(t => this.loop(t));
+  },
+  resize() {
+    const w = this.cv.clientWidth; if (!w) return;
+    const d = devicePixelRatio || 1; this.w = w;
+    this.cv.width = w * d; this.cv.height = w * d; this.c.setTransform(d, 0, 0, d, 0, 0);
+    this.g = { cx: w / 2, cy: w / 2, R: w * .43, r: w * .3, lw: w * .045 };
+    this.draw();
+  },
+  pt(e) { const b = this.cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; },
+  ang: v => A0 + clamp(v, 0, 100) / 100 * SW,
+  valAt(x, y) {
+    const g = this.g; let a = Math.atan2(y - g.cy, x - g.cx) - A0;
+    while (a < 0) a += Math.PI * 2; while (a > Math.PI * 2) a -= Math.PI * 2;
+    if (a > SW) a = a - SW < (Math.PI * 2 - SW) / 2 ? SW : 0;
+    return Math.round(a / SW * 200) / 2;
+  },
+  setSp(v) {
+    v = clamp(Math.round(v * 2) / 2, 5, 95); this.sp = v;
+    $('#spVal').textContent = v.toFixed(1);
+    this.cv.setAttribute('aria-valuenow', v);
+    markPreset(v);
+    if (RM) this.draw();
+  },
+  loop(t) {
+    requestAnimationFrame(t2 => this.loop(t2));
+    if (document.hidden || view !== 'dash') return;
+    this.draw();
+  },
+  draw() {
+    const c = this.c, g = this.g; if (!g) return;
+    const { cx, cy, R, r, lw } = g, w = this.w;
+    const target = this.h == null ? 0 : this.h;
+    this.hs += (target - this.hs) * (RM ? 1 : .06);
+    const hs = this.hs, act = this.hr || this.dr;
+    this.ph += act ? .05 : .025;
+    c.clearRect(0, 0, w, w);
+
+    // ---- track
+    c.lineCap = 'round'; c.lineWidth = lw;
+    c.strokeStyle = 'rgba(255,255,255,.07)';
+    c.beginPath(); c.arc(cx, cy, R, A0, A0 + SW); c.stroke();
+    // comfort band 40-60
+    c.lineWidth = 3; c.strokeStyle = 'rgba(45,212,191,.45)';
+    c.beginPath(); c.arc(cx, cy, R + lw * .95, this.ang(40), this.ang(60)); c.stroke();
+    // ticks + labels
+    c.lineCap = 'butt';
+    for (let v = 0; v <= 100; v += 5) {
+      const a = this.ang(v), maj = v % 20 === 0, r1 = R - lw * .8, r2 = r1 - (maj ? 9 : 5);
+      c.strokeStyle = maj ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.14)'; c.lineWidth = maj ? 1.6 : 1;
+      c.beginPath(); c.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); c.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); c.stroke();
+      if (maj) {
+        const rl = r2 - 11; c.fillStyle = 'rgba(163,179,209,.7)'; c.font = `600 ${Math.max(10, w * .028)}px system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(v, cx + Math.cos(a) * rl, cy + Math.sin(a) * rl);
+      }
+    }
+    // value arc
+    c.lineCap = 'round'; c.lineWidth = lw;
+    let stroke = col(hs);
+    if (c.createConicGradient) {
+      const cg = c.createConicGradient(A0, cx, cy);
+      for (let v = 0; v <= 100; v += 10) cg.addColorStop(v / 100 * .75, col(v, 60));
+      cg.addColorStop(.999, col(100, 60)); stroke = cg;
+    }
+    if (this.h != null) {
+      c.save(); c.shadowColor = col(hs, 60, .8); c.shadowBlur = 18;
+      c.strokeStyle = stroke; c.beginPath(); c.arc(cx, cy, R, A0, this.ang(hs)); c.stroke(); c.restore();
+    }
+
+    // ---- orb
+    c.save(); c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.clip();
+    const bg = c.createRadialGradient(cx - r * .3, cy - r * .4, r * .1, cx, cy, r);
+    bg.addColorStop(0, 'rgba(40,60,120,.55)'); bg.addColorStop(1, 'rgba(6,10,30,.9)');
+    c.fillStyle = bg; c.fillRect(cx - r, cy - r, r * 2, r * 2);
+    const lvl = cy + r - 2 * r * clamp(hs, 0, 100) / 100, amp = r * (act ? .05 : .03);
+    for (let k = 0; k < 2; k++) {
+      c.beginPath(); c.moveTo(cx - r, cy + r);
+      for (let x = -r; x <= r; x += 4) {
+        const y = lvl + Math.sin(x / r * 3.2 + this.ph * (k ? 1.4 : 1) + k * 2.1) * amp * (k ? .8 : 1);
+        c.lineTo(cx + x, y);
+      }
+      c.lineTo(cx + r, cy + r); c.closePath();
+      const lg = c.createLinearGradient(0, lvl - amp, 0, cy + r);
+      lg.addColorStop(0, col(hs, 62, k ? .45 : .85)); lg.addColorStop(1, col(hs, 30, k ? .3 : .9));
+      c.fillStyle = lg; c.fill();
+    }
+    // bubbles while humidifying, rising vapour while drying
+    if (!RM && (this.hr || this.dr) && Math.random() < .35) {
+      this.bub.push({ x: cx + (Math.random() - .5) * r * 1.4, y: this.hr ? cy + r : lvl, r: 1.5 + Math.random() * 3.5, v: .4 + Math.random() * .9, dry: !this.hr });
+    }
+    this.bub = this.bub.filter(b => {
+      b.y -= b.v; b.x += Math.sin(b.y / 9) * .3;
+      const top = b.dry ? cy - r : lvl;
+      if (b.y < top) return false;
+      c.beginPath(); c.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      if (b.dry) { c.fillStyle = `rgba(251,191,36,${clamp((b.y - top) / r, 0, .6)})`; c.fill(); }
+      else { c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; c.stroke(); }
+      return true;
+    });
+    // target level line
+    const ty = cy + r - 2 * r * this.sp / 100;
+    c.setLineDash([5, 6]); c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(cx - r, ty); c.lineTo(cx + r, ty); c.stroke(); c.setLineDash([]);
+    c.restore();
+    // glass rim + highlight
+    c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,255,255,.14)';
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.stroke();
+    c.lineWidth = r * .06; c.lineCap = 'round'; c.strokeStyle = 'rgba(255,255,255,.08)';
+    c.beginPath(); c.arc(cx, cy, r * .86, Math.PI * 1.08, Math.PI * 1.42); c.stroke();
+
+    // ---- current value marker
+    if (this.h != null) {
+      const a = this.ang(hs);
+      c.fillStyle = '#fff';
+      c.beginPath(); c.arc(cx + Math.cos(a) * R, cy + Math.sin(a) * R, lw * .22, 0, Math.PI * 2); c.fill();
+    }
+    // ---- setpoint knob
+    const a = this.ang(this.sp), kx = cx + Math.cos(a) * R, ky = cy + Math.sin(a) * R, kr = lw * (this.drag ? .95 : .78);
+    c.save(); c.shadowColor = 'rgba(167,139,250,.9)'; c.shadowBlur = this.drag ? 26 : 16;
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(kx, ky, kr, 0, Math.PI * 2); c.fill(); c.restore();
+    c.lineWidth = 3.5; c.strokeStyle = '#a78bfa'; c.beginPath(); c.arc(kx, ky, kr, 0, Math.PI * 2); c.stroke();
+    if (this.drag) {
+      const lx = cx + Math.cos(a) * (R + lw * 2.1), ly = cy + Math.sin(a) * (R + lw * 2.1);
+      c.fillStyle = '#fff'; c.font = `700 ${w * .038}px system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(this.sp.toFixed(1), clamp(lx, 22, w - 22), clamp(ly, 12, w - 12));
+    }
+  },
+};
+
+let spTimer = null;
+function commitSp(v, delay) {
+  Dial.pend = v; clearTimeout(spTimer);
+  spTimer = setTimeout(async () => {
+    try { await API.post('/api/set', { sp: v }); toast(`Target set to ${v.toFixed(1)} %RH`); }
+    catch (e) { toast('Could not set target: ' + e.message, 'err'); }
+    setTimeout(() => { if (Dial.pend === v) Dial.pend = null; }, 2500);
+  }, delay);
+}
+function markPreset(v) { $$('.preset').forEach(b => b.classList.toggle('on', +b.dataset.v === v)); }
+
+/* ================================================================ chart */
+class Chart {
+  constructor(el, o) {
+    this.el = el; el.classList.add('chart'); Object.assign(this, { height: 260, minimal: false, empty: 'Collecting data…', light: false }, o);
+    this.cv = document.createElement('canvas'); el.appendChild(this.cv);
+    this.tip = document.createElement('div'); this.tip.className = 'tip'; el.appendChild(this.tip);
+    this.c = this.cv.getContext('2d'); this.data = []; this.view = null; this.hx = null; this.sel = null; this.hidden = new Set(); this.iv = 5;
+    if (!this.fixedW) new ResizeObserver(() => this.resize()).observe(el);
+    const px = e => e.clientX - this.cv.getBoundingClientRect().left;
+    let raf = 0; const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; this.draw(); }); };
+    this.cv.addEventListener('pointerdown', e => { const x = px(e); this.sel = { a: x, b: x }; this.hx = x; redraw(); });
+    this.cv.addEventListener('pointermove', e => { const x = px(e); this.hx = x; if (this.sel && e.buttons) this.sel.b = x; redraw(); });
+    this.cv.addEventListener('pointerup', () => {
+      const s = this.sel; this.sel = null;
+      if (s && Math.abs(s.b - s.a) > 10 && this.geo && !this.noZoom) {
+        const g = this.geo, t = x => g.x0 + (clamp(x, g.L, g.L + g.pw) - g.L) / g.pw * (g.x1 - g.x0);
+        const a = t(Math.min(s.a, s.b)), b = t(Math.max(s.a, s.b));
+        if (b - a > this.iv * 3) { this.view = [a, b]; this.onZoom && this.onZoom(true); }
+      }
+      redraw();
+    });
+    this.cv.addEventListener('pointerleave', e => { this.sel = null; if (e.pointerType === 'mouse') { this.hx = null; this.tip.classList.remove('on'); } redraw(); });
+    this.cv.addEventListener('pointercancel', () => { this.sel = null; redraw(); });
+    this.cv.addEventListener('dblclick', () => this.reset());
+  }
+  reset() { this.view = null; this.onZoom && this.onZoom(false); this.draw(); }
+  resize() { const w = this.fixedW || this.el.clientWidth; if (!w) return; const d = devicePixelRatio || 1; this.w = w; this.cv.width = w * d; this.cv.height = this.height * d; this.cv.style.height = this.height + 'px'; this.c.setTransform(d, 0, 0, d, 0, 0); this.draw(); }
+  set(data, iv) { this.data = data; if (iv) this.iv = iv; this.draw(); }
+  toggle(k) { this.hidden.has(k) ? this.hidden.delete(k) : this.hidden.add(k); this.draw(); }
+  legend(el) {
+    el.innerHTML = '';
+    for (const s of this.series) {
+      const b = document.createElement('button'); b.className = 'lg';
+      b.innerHTML = `<i style="background:${s.color}"></i>${s.name}`;
+      b.onclick = () => { this.toggle(s.k); b.classList.toggle('off'); };
+      el.appendChild(b);
+    }
+  }
+  draw() {
+    const c = this.c, w = this.w, h = this.height; if (!w) return;
+    const th = this.light ? { grid: 'rgba(0,0,0,.08)', tx: '#555', bg: '#fff' } : { grid: 'rgba(255,255,255,.06)', tx: '#6c7c9e' };
+    c.clearRect(0, 0, w, h);
+    if (th.bg) { c.fillStyle = th.bg; c.fillRect(0, 0, w, h); }
+    const hid = k => this.hidden.has(k);
+    const hasR = this.series.some(s => s.axis === 'r' && !hid(s.k));
+    const L = 42, R = hasR ? 42 : 12, T = 12, B = 24, pw = w - L - R, ph = h - T - B;
+    const d = this.data;
+    let x0 = d.length ? d[0].ts : 0, x1 = d.length ? d[d.length - 1].ts : 1;
+    if (this.view) [x0, x1] = this.view;
+    const vis = d.filter(p => p.ts >= x0 && p.ts <= x1);
+    this.geo = null;
+    if (vis.length < 2) {
+      c.fillStyle = th.tx; c.font = '13px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(this.empty, w / 2, h / 2); this.tip.classList.remove('on'); return;
+    }
+    if (x1 <= x0) x1 = x0 + 1;
+    const X = ts => L + (ts - x0) / (x1 - x0) * pw;
+    const axis = a => {
+      let lo = Infinity, hi = -Infinity;
+      for (const s of this.series) {
+        if (s.axis !== a || hid(s.k)) continue;
+        for (const p of vis) { const v = p[s.k]; if (v == null || isNaN(v)) continue; if (v < lo) lo = v; if (v > hi) hi = v; }
+      }
+      if (!isFinite(lo)) return null;
+      const mid = (lo + hi) / 2, span = Math.max(hi - lo, a === 'l' ? 4 : 2) * 1.2;
+      return nice(mid - span / 2, mid + span / 2, 5);
+    };
+    const yl = axis('l'), yr = hasR ? axis('r') : null;
+    const Y = (v, a) => T + ph - (v - a.lo) / (a.hi - a.lo) * ph;
+    c.font = '11px system-ui'; c.textBaseline = 'middle';
+    if (yl) for (let v = yl.lo; v <= yl.hi + 1e-9; v += yl.step) {
+      const y = Math.round(Y(v, yl)) + .5;
+      c.strokeStyle = th.grid; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y); c.lineTo(L + pw, y); c.stroke();
+      c.fillStyle = th.tx; c.textAlign = 'right'; c.fillText(+v.toFixed(2) + '%', L - 6, y);
+    }
+    if (yr) for (let v = yr.lo; v <= yr.hi + 1e-9; v += yr.step) {
+      c.fillStyle = '#fb923c'; c.globalAlpha = .75; c.textAlign = 'left'; c.fillText(+v.toFixed(2) + '°', L + pw + 6, Y(v, yr)); c.globalAlpha = 1;
+    }
+    // time axis
+    const span = x1 - x0, steps = [10, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800];
+    const st = steps.find(s => span / s <= Math.max(2, pw / 85)) || 172800;
+    const off = x0 > 1e9 && st >= 3600 ? -new Date(x0 * 1000).getTimezoneOffset() * 60 : 0;
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    for (let t = Math.ceil((x0 + off) / st) * st - off; t <= x1; t += st) {
+      const x = Math.round(X(t)) + .5;
+      c.strokeStyle = th.grid; c.beginPath(); c.moveTo(x, T); c.lineTo(x, T + ph); c.stroke();
+      c.fillStyle = th.tx; c.fillText(tfmt(t, st >= 86400 || (span > 86400 && st >= 21600 && (t + off) % 86400 === 0)), x, h - 6);
+    }
+    const gap = this.iv * 3.5;
+    // output as a soft area along the bottom
+    const so = this.series.find(s => s.axis === 'o');
+    if (so && !hid(so.k)) {
+      const bh = ph * .32, base = T + ph;
+      for (let i = 1; i < vis.length; i++) {
+        const p = vis[i - 1], q = vis[i]; if (q.ts - p.ts > gap || !p.o) continue;
+        const xa = X(p.ts), xb = X(q.ts), hh = Math.abs(p.o) / 100 * bh;
+        c.fillStyle = p.o > 0 ? (this.light ? 'rgba(14,165,233,.22)' : 'rgba(45,212,191,.2)') : 'rgba(251,191,36,.22)';
+        c.fillRect(xa, base - hh, Math.max(xb - xa, 1), hh);
+      }
+    }
+    // lines
+    for (const s of this.series) {
+      if (s.axis === 'o' || hid(s.k)) continue;
+      const a = s.axis === 'r' ? yr : yl; if (!a) continue;
+      const segs = []; let seg = null, prev = null;
+      for (const p of vis) {
+        const v = p[s.k];
+        if (v == null || isNaN(v)) { seg = null; continue; }
+        if (!seg || (prev && p.ts - prev.ts > gap)) { seg = []; segs.push(seg); }
+        const x = X(p.ts), y = Y(v, a);
+        if (s.step && seg.length) seg.push([x, seg[seg.length - 1][1]]);
+        seg.push([x, y]); prev = p;
+      }
+      c.lineJoin = 'round'; c.lineWidth = s.w || 1.6; c.strokeStyle = s.color; c.setLineDash(s.dash || []);
+      for (const sg of segs) {
+        if (sg.length < 1) continue;
+        c.beginPath(); sg.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.stroke();
+        if (s.fill && sg.length > 1) {
+          const gr = c.createLinearGradient(0, T, 0, T + ph);
+          gr.addColorStop(0, s.color + '55'); gr.addColorStop(1, s.color + '00');
+          c.save(); c.setLineDash([]); c.lineTo(sg[sg.length - 1][0], T + ph); c.lineTo(sg[0][0], T + ph); c.closePath(); c.fillStyle = gr; c.fill(); c.restore();
+        }
+      }
+      c.setLineDash([]);
+    }
+    this.geo = { L, pw, x0, x1 };
+    // zoom selection
+    if (this.sel && Math.abs(this.sel.b - this.sel.a) > 3 && !this.noZoom) {
+      c.fillStyle = 'rgba(56,225,255,.12)'; c.strokeStyle = 'rgba(56,225,255,.5)';
+      const xa = Math.min(this.sel.a, this.sel.b), xb = Math.max(this.sel.a, this.sel.b);
+      c.fillRect(xa, T, xb - xa, ph); c.strokeRect(xa + .5, T + .5, xb - xa, ph);
+    }
+    // hover
+    if (this.hx != null && this.hx >= L && this.hx <= L + pw) {
+      const ts = x0 + (this.hx - L) / pw * (x1 - x0);
+      let best = vis[0]; for (const p of vis) if (Math.abs(p.ts - ts) < Math.abs(best.ts - ts)) best = p;
+      const x = X(best.ts);
+      c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(x + .5, T); c.lineTo(x + .5, T + ph); c.stroke();
+      let html = `<div class="tt">${tfmt(best.ts, x1 - x0 > 86400)}</div>`;
+      for (const s of this.series) {
+        if (hid(s.k)) continue; const v = best[s.k]; if (v == null || isNaN(v)) continue;
+        if (s.axis !== 'o') { const a = s.axis === 'r' ? yr : yl; if (a) { c.fillStyle = s.color; c.beginPath(); c.arc(x, Y(v, a), 4, 0, 7); c.fill(); c.strokeStyle = '#0b1430'; c.lineWidth = 2; c.stroke(); } }
+        const val = s.axis === 'o' ? sign(v, 0) : v.toFixed(1);
+        html += `<div><i style="background:${s.color}"></i>${s.name}<b>${val}${s.unit || ''}</b></div>`;
+      }
+      this.tip.innerHTML = html; this.tip.classList.add('on');
+      const tw = this.tip.offsetWidth; this.tip.style.left = (x + 14 + tw > w ? x - 14 - tw : x + 14) + 'px';
+    } else this.tip.classList.remove('on');
+  }
+}
+const SERIES = [
+  { k: 'h', name: 'Humidity', color: '#38e1ff', axis: 'l', w: 2.2, fill: 1, unit: '%' },
+  { k: 'sp', name: 'Target', color: '#a78bfa', axis: 'l', dash: [5, 5], step: 1, w: 1.5, unit: '%' },
+  { k: 't', name: 'Temperature', color: '#fb923c', axis: 'r', w: 1.5, unit: '°C' },
+  { k: 'o', name: 'Output', color: '#2dd4bf', axis: 'o', unit: '%' },
+];
+let liveChart, tuneChart, anaChart;
+
+/* ================================================================ dashboard */
+function zone(h) {
+  if (h < 30) return ['Very dry', 'Static shocks, cracking wood and dry skin. Time to humidify.'];
+  if (h < 40) return ['Dry', 'A little dry. Fine for electronics, tough on plants and instruments.'];
+  if (h <= 60) return ['Comfortable', 'The sweet spot for people, homes, wood and instruments.'];
+  if (h <= 70) return ['Humid', 'Lush for tropical plants. Keep an eye on condensation.'];
+  return ['Very humid', 'Mould and dust-mite territory. Ventilate or dehumidify.'];
+}
+function slopePerMin(pts, secs) {
+  if (pts.length < 3) return null;
+  const end = pts[pts.length - 1].ts, sel = pts.filter(p => p.ts >= end - secs && p.h != null);
+  if (sel.length < 3) return null;
+  const n = sel.length, mx = sel.reduce((a, p) => a + p.ts, 0) / n, my = sel.reduce((a, p) => a + p.h, 0) / n;
+  let num = 0, den = 0; for (const p of sel) { num += (p.ts - mx) * (p.h - my); den += (p.ts - mx) ** 2; }
+  return den ? num / den * 60 : null;
+}
+function renderDash(s) {
+  const ok = s.ok && s.h != null;
+  $('#hVal').textContent = ok ? f1(s.h) : '--';
+  if (Dial.pend == null && !Dial.drag) { Dial.sp = s.sp; $('#spVal').textContent = f1(s.sp); markPreset(s.sp); Dial.cv.setAttribute('aria-valuenow', s.sp); }
+  Dial.h = ok ? s.h : null; Dial.hr = s.hr; Dial.dr = s.dr;
+  if (RM) Dial.draw();
+  Mist.h = ok ? s.h : 50;
+  if (ok) document.documentElement.style.setProperty('--hc', col(s.h, 64));
+
+  const err = ok ? s.h - s.sp : null;
+  $('#dVal').textContent = ok ? (Math.abs(err) < .3 ? '● on target' : `${sign(err)} % from target`) : '';
+  $('#dVal').style.color = ok ? (Math.abs(err) < 1 ? 'var(--gr)' : Math.abs(err) < 4 ? 'var(--tx2)' : 'var(--am)') : '';
+
+  // state chip
+  let cls = '', tx = '';
+  if (!s.ok) { cls = s.ev ? 'bad' : ''; tx = s.ev ? 'Sensor fault' : 'Starting…'; }
+  else if (s.at.s === 1) { cls = 'tune'; tx = 'Auto-tuning'; }
+  else if (s.mode === 0) { cls = ''; tx = 'Standby'; }
+  else if (s.u > .5) { cls = 'hum'; tx = 'Humidifying'; }
+  else if (s.u < -.5) { cls = 'dry'; tx = 'Drying'; }
+  else { cls = 'ok'; tx = 'Holding steady'; }
+  const chip = $('#stateChip'); chip.className = 'chip ' + cls; chip.lastChild.textContent = tx;
+
+  // mode segment
+  if (!modePending) setSeg(s.mode);
+
+  // temperature
+  $('#tVal').textContent = f1(s.t);
+  $('#dpVal').textContent = f1(s.dp);
+  $('#ahVal').textContent = ok ? absHum(s.t, s.h).toFixed(1) : '--';
+  $('#tMark').style.left = clamp((s.t - 5) / 35 * 100, 0, 100) + '%';
+
+  // output
+  const u = s.u || 0;
+  $('#uVal').textContent = (u > 0 ? '+' : '') + Math.round(u);
+  $('#uTx').textContent = s.mode === 0 ? 'Controller off' : u > .5 ? `Humidifier at ${Math.round(s.hd)} % duty` : u < -.5 ? `Dehumidifier at ${Math.round(s.dd)} % duty` : 'Idle, no correction needed';
+  const of = $('#oFill');
+  of.style.left = (u >= 0 ? 50 : 50 + u / 2) + '%'; of.style.width = Math.abs(u) / 2 + '%';
+  of.style.background = u >= 0 ? 'linear-gradient(90deg,#2dd4bf,#38e1ff)' : 'linear-gradient(90deg,#fb923c,#fbbf24)';
+  $('#rH').classList.toggle('on', !!s.hr); $('#rD').classList.toggle('on', !!s.dr);
+
+  // climate
+  if (ok) {
+    const [zn, zd] = zone(s.h); $('#zoneN').textContent = zn; $('#zoneD').textContent = zd;
+    $('#csH').style.left = s.h + '%'; $('#csT').style.left = s.sp + '%';
+  }
+  const sl = slopePerMin(LIVE, 120);
+  $('#kTr').textContent = sl == null ? '--' : sign(sl, 2) + ' %/min';
+  let eta = '';
+  if (ok && s.mode) {
+    if (Math.abs(err) < .5) eta = 'At target';
+    else if (sl && Math.sign(sl) === -Math.sign(err) && Math.abs(sl) > .01) eta = 'Target in ~' + dur(Math.abs(err / sl) * 60);
+  }
+  $('#etaVal').textContent = eta;
+
+  $('#kHon').textContent = dur(s.hon); $('#kHsw').textContent = s.hsw + ' switches';
+  $('#kDon').textContent = dur(s.don); $('#kDsw').textContent = s.dsw + ' switches';
+  $('#kUp').textContent = dur(s.up); $('#kCli').textContent = s.cli + ' Wi-Fi client' + (s.cli === 1 ? '' : 's');
+
+  // alarm banner
+  const al = $('#alarm');
+  al.classList.toggle('on', !!s.al || (!s.ok && !!s.ev));
+  $('#alarmTx').textContent = !s.ok ? 'Sensor not responding. Outputs are switched off for safety. Check the wiring.' :
+    s.al === 2 ? `Humidity is above the high alarm (${CFG ? CFG.ahi : ''} %RH). The humidifier is locked out.` :
+    s.al === 1 ? `Humidity is below the low alarm (${CFG ? CFG.alo : ''} %RH). The dehumidifier is locked out.` : '';
+}
+
+let modePending = false;
+function setSeg(m) {
+  const seg = $('#modeSeg'), bs = $$('#modeSeg button'), b = bs[m]; if (!b) return;
+  bs.forEach((x, i) => x.classList.toggle('on', i === m));
+  const gl = seg.querySelector('.glider'); gl.style.width = b.offsetWidth + 'px'; gl.style.transform = `translateX(${b.offsetLeft - 5}px)`;
+}
+
+/* ================================================================ tuning page */
+const PF = [['kp', 0, 50, .01, 3], ['ki', 0, .5, .00001, 5], ['kd', 0, 1000, 1, 1], ['win', 5, 120, 1, 0], ['mon', 0, 120, 1, 0], ['moff', 0, 600, 5, 0]];
+let pidDirty = false, selRule = 1;
+function initTune() {
+  for (const [k, mn, mx, st] of PF) {
+    const n = $('#' + k), r = $('#' + k + 'R');
+    Object.assign(r, { min: mn, max: mx, step: st }); n.step = st; n.min = 0;
+    r.oninput = () => { n.value = r.value; setPidDirty(true); };
+    n.oninput = () => { r.value = n.value; setPidDirty(true); };
+  }
+  $('#pidSave').onclick = async () => {
+    const d = {}; for (const [k] of PF) d[k] = $('#' + k).value;
+    try { await API.post('/api/pid', d); setPidDirty(false); toast('PID settings saved'); await loadConfig(); }
+    catch (e) { toast('Save failed: ' + e.message, 'err'); }
+  };
+  $('#pidRevert').onclick = () => { setPidDirty(false); fillPid(CFG); };
+  const rl = $('#rules');
+  RULES.forEach((r, i) => {
+    const b = document.createElement('button'); b.className = 'rule'; b.type = 'button';
+    b.innerHTML = `<span class="dot"></span><span><b>${r[0]}</b><small>${r[4]}</small></span>${i === 1 ? '<span class="rec">RECOMMENDED</span>' : ''}`;
+    b.onclick = () => { selRule = i; markRule(); };
+    rl.appendChild(b);
+  });
+  $('#band').oninput = () => $('#bandV').textContent = (+$('#band').value).toFixed(1) + ' %RH';
+  $('#atStart').onclick = async () => {
+    try { await API.post('/api/tune', { act: 'start', rule: selRule, band: $('#band').value }); TUNE.length = 0; toast('Auto-tune started'); poll(); }
+    catch (e) { toast(e.message, 'err'); }
+  };
+  $('#atStop').onclick = async () => { if (!confirm('Stop the auto-tune? The current gains are kept.')) return; try { await API.post('/api/tune', { act: 'stop' }); poll(); } catch (e) { toast(e.message, 'err'); } };
+}
+function markRule() { $$('.rule').forEach((b, i) => b.classList.toggle('on', i === selRule)); }
+function setPidDirty(v) { pidDirty = v; $('#pidSave').disabled = !v; $('#pidRevert').disabled = !v; $('#pidState').textContent = v ? 'unsaved changes' : ''; derived(); }
+function fillPid(c) {
+  if (!c) return;
+  for (const [k, , mx, , d] of PF) {
+    const r = $('#' + k + 'R');
+    r.max = Math.max(mx, Math.ceil(+c[k] * 1.5));  // widen the slider if auto-tune went past it
+    $('#' + k).value = (+c[k]).toFixed(d); r.value = c[k];
+  }
+  derived();
+}
+function derived() {
+  const kp = +$('#kp').value, ki = +$('#ki').value, kd = +$('#kd').value;
+  $('#tiV').textContent = ki > 0 ? dur(kp / ki) : '∞';
+  $('#tdV').textContent = kp > 0 ? dur(kd / kp) : '--';
+}
+function tbar(id, v, color) {
+  const e = $(id), x = clamp(v, -100, 100);
+  e.style.left = (x >= 0 ? 50 : 50 + x / 2) + '%'; e.style.width = Math.abs(x) / 2 + '%'; e.style.background = color;
+}
+function renderTune(s) {
+  if (!pidDirty && CFG && (Math.abs(s.kp - CFG.kp) > 1e-6 || Math.abs(s.ki - CFG.ki) > 1e-7 || Math.abs(s.kd - CFG.kd) > 1e-4)) loadConfig();
+  const flip = s.mode === 2 ? -1 : 1;
+  tbar('#bP', s.p * flip, '#38e1ff'); tbar('#bI', s.i * flip, '#a78bfa'); tbar('#bD', s.d * flip, '#fb923c'); tbar('#bU', s.u, 'linear-gradient(90deg,#2dd4bf,#38e1ff)');
+  $('#vP').textContent = sign(s.p * flip); $('#vI').textContent = sign(s.i * flip); $('#vD').textContent = sign(s.d * flip); $('#vU').textContent = sign(s.u);
+  $('#errV').textContent = s.ok ? `error ${sign(s.sp - s.hf, 2)} %RH` : '';
+  drawTape();
+
+  // auto-tune
+  const at = s.at, run = at.s === 1;
+  $('#atIdle').hidden = run; $('#atRun').hidden = !run;
+  const ch = $('#atChip');
+  ch.innerHTML = run ? '<span class="chip tune"><i></i>Running</span>' : at.s === 2 ? '<span class="chip ok">Complete</span>' : at.s === 3 ? '<span class="chip bad">Failed</span>' : '';
+  const note = $('#atNote');
+  if (at.s === 3) { note.className = 'note err'; note.textContent = 'Last auto-tune failed: ' + at.m + '. Make sure the target is reachable and the mode is right, then try again.'; }
+  else if (at.s === 2) { note.className = 'note good'; note.textContent = `Auto-tune complete (${at.m}) after ${dur(at.el)}. The gains below were applied; pick another rule to compare.`; }
+  const sb = $('#atStart');
+  sb.disabled = s.mode === 0 || !s.ok;
+  sb.title = s.mode === 0 ? 'Choose a mode on the dashboard first' : '';
+  if (run) {
+    if (!TUNE.length) for (const p of LIVE) if (p.ts >= s.now - at.el) TUNE.push(p);
+    TUNE.push({ ts: s.now, h: s.h, sp: s.sp, o: s.u, t: s.t });
+    if (TUNE.length > 4000) TUNE.splice(0, TUNE.length - 4000);
+    if (view === 'tune') tuneChart.set(TUNE, 2);
+    $('#atCyc').textContent = at.c;
+    $('#atArc').style.strokeDashoffset = 326.7 * (1 - Math.min(at.c / 4, 1));
+    $('#atEl').textContent = dur(at.el);
+    $('#atRel').textContent = at.hi ? (s.mode === 2 ? 'Dehumidifier ON' : 'Humidifier ON') : (s.mode === 3 ? 'Dehumidifier ON' : 'Output OFF');
+    $('#atAmp').textContent = at.c ? '±' + at.a.toFixed(2) + ' %RH' : 'measuring…';
+    $('#atPer').textContent = at.c ? dur(at.per) : 'measuring…';
+    $('#atMsg').textContent = `${at.m}: holding the output fully ${at.hi ? 'on' : 'off'} until humidity crosses ${f1(s.sp)} ± ${f1(CFG ? CFG.band : 1)} %RH. Needs 3 matching cycles.`;
+  }
+  // results
+  const res = s.ku > 0 && s.tu > 0; $('#atRes').hidden = !res;
+  if (res) {
+    const key = s.ku + '/' + s.tu + '/' + s.rule + '/' + s.kp;
+    if (renderTune.key !== key) {
+      renderTune.key = key;
+      $('#kuV').textContent = s.ku.toFixed(2); $('#tuV').textContent = dur(s.tu);
+      $('#resBody').innerHTML = RULES.map((r, i) => {
+        const g = gains(i, s.ku, s.tu), cur = Math.abs(g.kp - s.kp) < 1e-3 && Math.abs(g.ki - s.ki) < 1e-5;
+        return `<tr class="${cur ? 'cur' : ''}"><td>${r[0]}</td><td>${g.kp.toFixed(2)}</td><td>${g.ki.toFixed(4)}</td><td>${g.kd.toFixed(1)}</td><td>${cur ? '✓ active' : `<button class="btn" data-apply="${i}">Apply</button>`}</td></tr>`;
+      }).join('');
+    }
+  }
+}
+function drawTape() {
+  const cv = $('#tape'), w = cv.clientWidth; if (!w || view !== 'tune') return;
+  const d = devicePixelRatio || 1, h = 44; cv.width = w * d; cv.height = h * d;
+  const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h);
+  const n = 150, bw = w / n;
+  c.fillStyle = 'rgba(255,255,255,.04)'; c.fillRect(0, 2, w, 18); c.fillRect(0, 24, w, 18);
+  TAPE.slice(-n).forEach((t, i, a) => {
+    const x = w - (a.length - i) * bw;
+    if (t.hr) { c.fillStyle = '#38e1ff'; c.fillRect(x, 2, bw + .5, 18); }
+    if (t.dr) { c.fillStyle = '#fbbf24'; c.fillRect(x, 24, bw + .5, 18); }
+  });
+  c.fillStyle = 'rgba(255,255,255,.55)'; c.font = '600 10px system-ui'; c.fillText('HUM', 4, 15); c.fillText('DEH', 4, 37);
+}
+
+/* ================================================================ analysis */
+const RANGES = { '20m': ['f', 1200, '20 minutes'], '1h': ['m', 3600, 'last hour'], '6h': ['m', 21600, 'last 6 hours'], '24h': ['m', 86400, 'last 24 hours'], '7d': ['l', 604800, 'last 7 days'] };
+const ANA = { range: store('hp.range') || '24h', tol: 2, rows: [], meta: {}, stats: null, loaded: false };
+if (!RANGES[ANA.range]) ANA.range = '24h';
+function initAnalysis() {
+  $$('#ranges button').forEach(b => { b.classList.toggle('on', b.dataset.r === ANA.range); b.onclick = () => { ANA.range = b.dataset.r; store('hp.range', ANA.range); $$('#ranges button').forEach(x => x.classList.toggle('on', x === b)); loadAnalysis(); }; });
+  $$('#tols button').forEach(b => b.onclick = () => { ANA.tol = +b.dataset.t; $$('#tols button').forEach(x => x.classList.toggle('on', x === b)); renderStats(); });
+  $('#csvBtn').onclick = exportCSV;
+  $('#repBtn').onclick = printReport;
+  $('#insights').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+}
+async function loadAnalysis() {
+  const [r, span, label] = RANGES[ANA.range];
+  $('#anaTitle').textContent = 'History · ' + label;
+  anaChart.empty = 'Loading…'; anaChart.set([]);
+  try {
+    const { meta, rows } = parseCSV(await API.get('/api/history?r=' + r));
+    ANA.meta = meta; ANA.rows = rows.filter(p => p.ts >= meta.now - span);
+    anaChart.empty = 'No data recorded in this range yet';
+    anaChart.view = null; anaChart.set(ANA.rows, meta.iv);
+    renderStats();
+    ANA.loaded = true;
+  } catch (e) { anaChart.empty = 'Could not load history'; anaChart.set([]); toast('History: ' + e.message, 'err'); }
+  loadRhythm();
+}
+function analyze(rows, tol) {
+  const n = rows.length; if (n < 2) return null;
+  const A = { n, span: rows[n - 1].ts - rows[0].ts, hMin: rows[0], hMax: rows[0], tMin: rows[0], tMax: rows[0] };
+  let sh = 0, sh2 = 0, st = 0, sdp = 0, inb = 0, ae = 0, se = 0, hum = 0, deh = 0, comf = 0, mold = 0, bias = 0, spc = 0, active = 0;
+  for (let i = 0; i < n; i++) {
+    const p = rows[i], e = p.h - p.sp;
+    sh += p.h; sh2 += p.h * p.h; st += p.t; sdp += p.h > 0 ? dewPoint(p.t, p.h) : p.t;
+    if (p.h < A.hMin.h) A.hMin = p; if (p.h > A.hMax.h) A.hMax = p;
+    if (p.t < A.tMin.t) A.tMin = p; if (p.t > A.tMax.t) A.tMax = p;
+    if (Math.abs(e) <= tol) inb++;
+    ae += Math.abs(e); se += e * e; bias += e;
+    if (p.o > 0) hum += p.o; else deh -= p.o;
+    if (p.o) active++;
+    if (p.h >= 40 && p.h <= 60 && p.t >= 19 && p.t <= 26) comf++;
+    if (p.h >= 70) mold++;
+    if (i && p.sp !== rows[i - 1].sp) spc++;
+  }
+  A.hAvg = sh / n; A.hSd = Math.sqrt(Math.max(0, sh2 / n - A.hAvg ** 2)); A.tAvg = st / n; A.dpAvg = sdp / n;
+  A.inBand = inb / n * 100; A.mae = ae / n; A.rmse = Math.sqrt(se / n); A.bias = bias / n;
+  A.humDuty = hum / n; A.dehDuty = deh / n; A.comfort = comf / n * 100; A.mold = mold / n * 100; A.spChanges = spc; A.active = active / n * 100;
+  A.spAvg = rows.reduce((a, p) => a + p.sp, 0) / n;
+  const mx = rows.reduce((a, p) => a + p.ts, 0) / n; let num = 0, den = 0;
+  for (const p of rows) { num += (p.ts - mx) * (p.h - A.hAvg); den += (p.ts - mx) ** 2; }
+  A.slope = den ? num / den * 3600 : 0;
+  A.score = Math.round(clamp(.55 * A.inBand + .45 * clamp(100 - A.mae * 15, 0, 100), 0, 100));
+  A.grade = A.score >= 90 ? 'A+' : A.score >= 80 ? 'A' : A.score >= 70 ? 'B' : A.score >= 55 ? 'C' : 'D';
+  return A;
+}
+function insights(A, tol) {
+  const L = [], I = (ic, cls, html) => L.push({ ic, cls, html });
+  const bigSpan = A.span > 86400;
+  I('i-drop', '', `Humidity averaged <b>${A.hAvg.toFixed(1)} %RH</b> against a target of <b>${A.spAvg.toFixed(1)} %RH</b>, and stayed within ±${tol} % for <b>${A.inBand.toFixed(0)} %</b> of the time.`);
+  I('i-chart', '', `Peak <b>${A.hMax.h.toFixed(1)} %</b> at ${tfmt(A.hMax.ts, bigSpan)}; lowest <b>${A.hMin.h.toFixed(1)} %</b> at ${tfmt(A.hMin.ts, bigSpan)}. Overall trend ${sign(A.slope, 2)} %RH per hour.`);
+  if (A.inBand >= 90 && A.hSd < 1.5) I('i-check', 'g', `Excellent regulation. Variation is only ±${A.hSd.toFixed(2)} %RH, so the PID gains suit this setup.`);
+  else if (A.hSd > 3) I('i-warn', 'w', `Humidity swings noticeably (σ = ${A.hSd.toFixed(1)} %RH). Try the <b>Tyreus-Luyben</b> or <b>No Overshoot</b> rule, or a longer output window. <button class="btn" data-go="tune" style="padding:3px 10px;font-size:12px">Open tuning</button>`);
+  if (A.humDuty > 85) I('i-warn', 'w', `The humidifier ran at <b>${A.humDuty.toFixed(0)} %</b> on average and is near its limit. It may be undersized for the space, or the room loses moisture quickly.`);
+  if (A.bias < -1.5 && A.humDuty > 60) I('i-warn', 'w', `Humidity sat <b>${Math.abs(A.bias).toFixed(1)} %</b> below target on average even with the humidifier working hard.`);
+  if (A.bias > 1.5 && A.dehDuty < 5) I('i-leaf', 'w', `The air was <b>${A.bias.toFixed(1)} %</b> wetter than the target on average, and a humidifier alone can't lower it. Consider <b>Auto</b> mode with a dehumidifier or exhaust fan.`);
+  if (A.active < 3 && A.hAvg > A.spAvg) I('i-leaf', '', `The outputs were almost never needed. Ambient humidity is already at or above your target.`);
+  if (A.mold > 10) I('i-warn', 'w', `Humidity was above 70 % for <b>${A.mold.toFixed(0)} %</b> of the time, which raises the risk of mould and condensation.`);
+  I('i-thermo', '', `Temperature ranged <b>${A.tMin.t.toFixed(1)}–${A.tMax.t.toFixed(1)} °C</b> (average ${A.tAvg.toFixed(1)} °C); average dew point <b>${A.dpAvg.toFixed(1)} °C</b>. ${A.tMin.t - A.dpAvg < 3 ? 'Surfaces near the minimum temperature are at <b>risk of condensation</b>.' : 'No condensation risk.'}`);
+  I('i-leaf', A.comfort > 70 ? 'g' : '', `Human comfort zone (40–60 %RH, 19–26 °C) was met <b>${A.comfort.toFixed(0)} %</b> of the time.`);
+  if (A.spChanges) I('i-tune', '', `The target was changed <b>${A.spChanges}</b> time${A.spChanges > 1 ? 's' : ''} in this period.`);
+  return L;
+}
+function renderStats() {
+  const A = ANA.stats = analyze(ANA.rows, ANA.tol);
+  const K = $('#kpis'), ins = $('#insights');
+  if (!A) {
+    K.innerHTML = '<div class="kpi" style="grid-column:1/-1"><small>No data</small><b>—</b><span>History fills in as the controller runs.</span></div>';
+    ins.innerHTML = '<li><svg class="ic"><use href="#i-clock"/></svg>Not enough data in this range yet.</li>';
+    $('#scV').textContent = '--'; $('#scG').textContent = '—'; $('#scArc').style.strokeDashoffset = 326.7; drawHisto(null); return;
+  }
+  const kp = (l, v, s) => `<div class="kpi"><small>${l}</small><b>${v}</b><span>${s}</span></div>`;
+  K.innerHTML =
+    kp('Average RH', A.hAvg.toFixed(1) + '%', 'σ ±' + A.hSd.toFixed(2)) +
+    kp('Range', A.hMin.h.toFixed(1) + '–' + A.hMax.h.toFixed(1), '%RH min–max') +
+    kp('In band ±' + ANA.tol, A.inBand.toFixed(0) + '%', 'of samples') +
+    kp('Mean error', A.mae.toFixed(2), 'RMS ' + A.rmse.toFixed(2) + ' %RH') +
+    kp('Temperature', A.tAvg.toFixed(1) + '°', A.tMin.t.toFixed(1) + '–' + A.tMax.t.toFixed(1) + ' °C') +
+    kp('Dew point', A.dpAvg.toFixed(1) + '°', 'average') +
+    kp('Humidifier', A.humDuty.toFixed(0) + '%', 'avg duty' + (A.dehDuty > .5 ? ' · dehum ' + A.dehDuty.toFixed(0) + '%' : '')) +
+    kp('Trend', sign(A.slope, 2), '%RH per hour');
+  ins.innerHTML = insights(A, ANA.tol).map(x => `<li class="${x.cls}"><svg class="ic"><use href="#${x.ic}"/></svg><span>${x.html}</span></li>`).join('');
+  $('#scV').textContent = A.score; $('#scG').textContent = A.grade;
+  $('#scArc').style.strokeDashoffset = 326.7 * (1 - A.score / 100);
+  drawHisto(A);
+}
+function canvasCtx(cv) {
+  const w = cv.clientWidth, h = +(cv.dataset.h || (cv.dataset.h = cv.getAttribute('height'))), d = devicePixelRatio || 1;
+  cv.width = w * d; cv.height = h * d; cv.style.height = h + 'px';
+  const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h);
+  return { c, w, h };
+}
+function drawHisto(A) {
+  const cv = $('#histo'); if (!cv.clientWidth) return;
+  const { c, w, h } = canvasCtx(cv);
+  if (!A) return;
+  const rows = ANA.rows, lo = Math.floor(A.hMin.h), hi = Math.ceil(A.hMax.h + .01);
+  const span = hi - lo, bs = span <= 12 ? .5 : span <= 30 ? 1 : 2, nb = Math.max(1, Math.ceil(span / bs));
+  const bins = new Array(nb).fill(0);
+  for (const p of rows) bins[clamp(Math.floor((p.h - lo) / bs), 0, nb - 1)]++;
+  const mx = Math.max(...bins), B = 22, T = 8, ph = h - B - T, bw = w / nb;
+  bins.forEach((v, i) => {
+    const bh = v / mx * ph, x = i * bw, hv = lo + (i + .5) * bs;
+    const g = c.createLinearGradient(0, T + ph - bh, 0, T + ph);
+    g.addColorStop(0, col(hv, 62)); g.addColorStop(1, col(hv, 40, .3));
+    c.fillStyle = g; c.beginPath();
+    if (c.roundRect) c.roundRect(x + 1, T + ph - bh, Math.max(bw - 2, 1), bh, [4, 4, 0, 0]); else c.rect(x + 1, T + ph - bh, Math.max(bw - 2, 1), bh);
+    c.fill();
+  });
+  const X = v => (v - lo) / (nb * bs) * w;
+  c.setLineDash([4, 4]); c.strokeStyle = '#a78bfa'; c.lineWidth = 1.5;
+  const tx = X(A.spAvg); c.beginPath(); c.moveTo(tx, T); c.lineTo(tx, T + ph); c.stroke(); c.setLineDash([]);
+  c.fillStyle = '#6c7c9e'; c.font = '11px system-ui'; c.textAlign = 'center';
+  const lstep = Math.max(1, Math.ceil(nb / 8));
+  for (let i = 0; i <= nb; i += lstep) c.fillText((lo + i * bs).toFixed(bs < 1 ? 1 : 0), clamp(i * bw, 12, w - 12), h - 6);
+  c.fillStyle = '#a78bfa'; c.textAlign = tx > w - 50 ? 'right' : 'left'; c.fillText(' target', tx + 3, T + 10);
+}
+async function loadRhythm() {
+  if (ANA.long && Date.now() - ANA.longAt < 300000) return drawRhythm();
+  try { ANA.long = parseCSV(await API.get('/api/history?r=l')).rows; ANA.longAt = Date.now(); } catch (e) { ANA.long = []; }
+  drawRhythm();
+}
+function drawRhythm() {
+  const cv = $('#rhythm'); if (!cv.clientWidth) return;
+  const { c, w, h } = canvasCtx(cv);
+  const rows = (ANA.long || []).filter(p => p.ts > 1e9);
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 22, r0 = R * .38;
+  if (rows.length < 6) { c.fillStyle = '#6c7c9e'; c.font = '13px system-ui'; c.textAlign = 'center'; c.fillText('Needs a few hours of time-stamped data', cx, cy); $('#rhyTx').textContent = ''; return; }
+  const sum = new Array(24).fill(0), cnt = new Array(24).fill(0);
+  for (const p of rows) { const hr = new Date(p.ts * 1000).getHours(); sum[hr] += p.h; cnt[hr]++; }
+  const avg = sum.map((s, i) => cnt[i] ? s / cnt[i] : null), vals = avg.filter(v => v != null);
+  const lo = Math.min(...vals) - 2, hi = Math.max(...vals) + 1;
+  for (let i = 0; i < 24; i++) {
+    const a0 = (i / 24) * Math.PI * 2 - Math.PI / 2, a1 = a0 + Math.PI * 2 / 24 * .86;
+    c.beginPath(); c.arc(cx, cy, R, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath();
+    c.fillStyle = 'rgba(255,255,255,.04)'; c.fill();
+    if (avg[i] == null) continue;
+    const rr = r0 + (avg[i] - lo) / (hi - lo) * (R - r0);
+    c.beginPath(); c.arc(cx, cy, rr, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath();
+    c.fillStyle = col(avg[i], 60, .85); c.fill();
+  }
+  c.fillStyle = '#6c7c9e'; c.font = '600 10.5px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (const hr of [0, 6, 12, 18]) { const a = hr / 24 * Math.PI * 2 - Math.PI / 2; c.fillText(String(hr).padStart(2, '0') + ':00', cx + Math.cos(a) * (R + 13), cy + Math.sin(a) * (R + 11)); }
+  const pk = avg.indexOf(Math.max(...vals)), lw = avg.indexOf(Math.min(...vals));
+  c.fillStyle = '#eaf2ff'; c.font = '300 22px system-ui'; c.fillText((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) + '%', cx, cy - 6);
+  c.fillStyle = '#6c7c9e'; c.font = '11px system-ui'; c.fillText('daily mean', cx, cy + 14);
+  $('#rhyTx').textContent = `wettest ${String(pk).padStart(2, '0')}:00 · driest ${String(lw).padStart(2, '0')}:00`;
+}
+function exportCSV() {
+  if (!ANA.rows.length) return toast('No data to export', 'err');
+  const lines = ['timestamp,temperature_c,humidity_rh,setpoint_rh,output_pct,dew_point_c'];
+  for (const p of ANA.rows) lines.push([p.ts > 1e9 ? new Date(p.ts * 1000).toISOString() : 'T+' + p.ts, p.t.toFixed(1), p.h.toFixed(1), p.sp.toFixed(1), p.o, dewPoint(p.t, p.h).toFixed(1)].join(','));
+  download(`hygropilot-${ANA.range}-${new Date().toISOString().slice(0, 10)}.csv`, lines.join('\n'));
+  toast(`Exported ${ANA.rows.length} samples`);
+}
+function printReport() {
+  const A = ANA.stats; if (!A) return toast('No data for a report yet', 'err');
+  const holder = document.createElement('div'); holder.style.cssText = 'position:fixed;left:-2000px;top:0;width:900px';
+  document.body.appendChild(holder);
+  const ch = new Chart(holder, { series: SERIES, height: 320, light: true, fixedW: 900 });
+  ch.resize(); ch.set(ANA.rows, ANA.meta.iv);
+  const img = ch.cv.toDataURL('image/png'); holder.remove();
+  const first = ANA.rows[0].ts, last = ANA.rows[ANA.rows.length - 1].ts, c = CFG || {};
+  const strip = s => s.replace(/<button[\s\S]*?<\/button>/g, '');
+  $('#report').innerHTML = `
+    <h1>HygroPilot climate report</h1>
+    <div class="sub">${tfmt(first, true)} → ${tfmt(last, true)} · ${A.n} samples · generated ${new Date().toLocaleString()}</div>
+    <h2>Humidity, target, temperature &amp; output</h2><img src="${img}" alt="history chart">
+    <h2>Key figures</h2>
+    <table><tbody>
+      <tr><th>Control score</th><td>${A.score}/100 (grade ${A.grade})</td><th>Within ±${ANA.tol} %</th><td>${A.inBand.toFixed(1)} %</td></tr>
+      <tr><th>Average humidity</th><td>${A.hAvg.toFixed(2)} %RH (σ ${A.hSd.toFixed(2)})</td><th>Average target</th><td>${A.spAvg.toFixed(1)} %RH</td></tr>
+      <tr><th>Minimum</th><td>${A.hMin.h.toFixed(1)} %RH at ${tfmt(A.hMin.ts, true)}</td><th>Maximum</th><td>${A.hMax.h.toFixed(1)} %RH at ${tfmt(A.hMax.ts, true)}</td></tr>
+      <tr><th>Mean abs. error</th><td>${A.mae.toFixed(2)} %RH</td><th>RMS error</th><td>${A.rmse.toFixed(2)} %RH</td></tr>
+      <tr><th>Temperature</th><td>${A.tAvg.toFixed(1)} °C (${A.tMin.t.toFixed(1)}–${A.tMax.t.toFixed(1)})</td><th>Dew point</th><td>${A.dpAvg.toFixed(1)} °C</td></tr>
+      <tr><th>Humidifier duty</th><td>${A.humDuty.toFixed(1)} %</td><th>Dehumidifier duty</th><td>${A.dehDuty.toFixed(1)} %</td></tr>
+      <tr><th>Comfort zone</th><td>${A.comfort.toFixed(0)} % of time</td><th>Trend</th><td>${sign(A.slope, 2)} %RH/h</td></tr>
+    </tbody></table>
+    <h2>Insights</h2><ul>${insights(A, ANA.tol).map(x => '<li>' + strip(x.html) + '</li>').join('')}</ul>
+    <h2>Controller</h2>
+    <table><tbody>
+      <tr><th>Mode</th><td>${MODES[c.mode] || '-'}</td><th>Target</th><td>${fx(c.sp, 1)} %RH</td></tr>
+      <tr><th>Kp / Ki / Kd</th><td>${fx(c.kp, 3)} / ${fx(c.ki, 5)} / ${fx(c.kd, 2)}</td><th>Output window</th><td>${c.win} s</td></tr>
+      <tr><th>Auto-tune</th><td>${c.ku > 0 ? 'Ku ' + (+c.ku).toFixed(3) + ', Tu ' + dur(c.tu) : 'not run'}</td><th>Tuning rule</th><td>${RULES[c.rule] ? RULES[c.rule][0] : '-'}</td></tr>
+    </tbody></table>`;
+  setTimeout(() => window.print(), 150);
+}
+
+/* ================================================================ settings */
+function initSettings() {
+  $('#fNet').onsubmit = async e => {
+    e.preventDefault();
+    const pass = $('#sPass').value;
+    if (pass && pass.length < 8) return toast('Password needs at least 8 characters', 'err');
+    if (!confirm('Save and restart the Wi-Fi access point? You will need to reconnect.')) return;
+    try { const r = await API.post('/api/settings', { ssid: $('#sSsid').value, pass }); toast(r.restart ? 'Restarting Wi-Fi… reconnect to "' + $('#sSsid').value + '"' : 'Saved'); }
+    catch (err) { toast(err.message, 'err'); }
+  };
+  $('#fSafe').onsubmit = async e => {
+    e.preventDefault();
+    const alo = +$('#sAlo').value, ahi = +$('#sAhi').value;
+    if (alo >= ahi) return toast('The low alarm must be below the high alarm', 'err');
+    try { await API.post('/api/settings', { alo, ahi, hoff: $('#sHoff').value, toff: $('#sToff').value, flip: $('#sFlip').checked ? 1 : 0 }); toast('Settings saved'); loadConfig(); }
+    catch (err) { toast(err.message, 'err'); }
+  };
+  $('#pwEye').onclick = () => { const p = $('#sPass'); p.type = p.type === 'password' ? 'text' : 'password'; $('#pwEye').textContent = p.type === 'password' ? 'show' : 'hide'; };
+  $('#btnSync').onclick = () => syncTime(true);
+  $('#btnBackup').onclick = () => download('hygropilot-settings.json', JSON.stringify(CFG, null, 2), 'application/json');
+  $('#btnClear').onclick = async () => { if (!confirm('Delete all recorded history? This cannot be undone.')) return; try { await API.post('/api/clear'); LIVE.length = 0; ANA.long = null; toast('History cleared'); } catch (e) { toast(e.message, 'err'); } };
+  $('#btnReboot').onclick = async () => { if (!confirm('Restart the controller?')) return; try { await API.post('/api/reboot'); toast('Restarting… reconnecting shortly'); } catch (e) { toast(e.message, 'err'); } };
+  $('#btnFactory').onclick = async () => { if (!confirm('Factory reset erases all settings, tuning and history, and restores the default Wi-Fi. Continue?')) return; try { await API.post('/api/factory'); toast('Factory reset… reconnect to "HygroPilot"'); } catch (e) { toast(e.message, 'err'); } };
+}
+function fillSettings(c) {
+  const act = document.activeElement;
+  const set = (id, v) => { const e = $(id); if (e !== act) e.value = v; };
+  set('#sSsid', c.ssid); set('#sPass', c.pass);
+  set('#sAlo', c.alo); set('#sAhi', c.ahi); set('#sHoff', c.hoff); set('#sToff', c.toff);
+  $('#sFlip').checked = !!c.flip;
+  $('#sysFw').textContent = c.fw; $('#sysChip').textContent = Number(c.chip).toString(16).toUpperCase();
+  $('#sysFlash').textContent = (c.flash / 1048576).toFixed(0) + ' MB';
+}
+function renderSys(s) {
+  $('#sysUp').textContent = dur(s.up); $('#sysHeap').textContent = (s.heap / 1024).toFixed(1) + ' kB'; $('#sysCli').textContent = s.cli;
+  $('#sysTime').textContent = s.sync ? new Date(s.now * 1000).toLocaleString() : 'not synced';
+}
+async function syncTime(manual) {
+  try {
+    await API.post('/api/time', { epoch: Math.floor(Date.now() / 1000), tz: -new Date().getTimezoneOffset() });
+    if (manual) toast('Controller clock synced'); timeSent = true;
+  } catch (e) { if (manual) toast(e.message, 'err'); }
+}
+async function loadConfig() {
+  try {
+    CFG = await API.get('/api/config');
+    if (!pidDirty) fillPid(CFG);
+    selRule = CFG.rule; markRule();
+    $('#band').value = CFG.band; $('#bandV').textContent = (+CFG.band).toFixed(1) + ' %RH';
+    fillSettings(CFG);
+  } catch (e) { /* retried on next change */ }
+}
+
+/* ================================================================ polling */
+function setConn(st) {
+  const p = $('#conn'); p.className = 'pill ' + st;
+  p.lastChild.textContent = st === 'live' ? 'Live' : st === 'demo' ? 'Demo' : 'Reconnecting…';
+}
+let pollTimer = null, pollSeq = 0;
+async function poll() {
+  const my = ++pollSeq;
+  clearTimeout(pollTimer);
+  try {
+    const s = await API.get('/api/status');
+    S = s; pollFails = 0; setConn(API.demo ? 'demo' : 'live');
+    if (!s.sync && !timeSent) syncTime(false);
+    if (s.ok && s.h != null) {
+      const last = LIVE[LIVE.length - 1];
+      if (!last || s.now > last.ts) LIVE.push({ ts: s.now, h: s.h, t: s.t, o: s.u, sp: s.sp });
+      while (LIVE.length && LIVE[LIVE.length - 1].ts - LIVE[0].ts > 1200) LIVE.shift();
+    }
+    TAPE.push({ hr: s.hr, dr: s.dr }); if (TAPE.length > 300) TAPE.shift();
+    renderDash(s);
+    if (view === 'dash') liveChart.set(LIVE, 2);
+    renderTune(s);
+    renderSys(s);
+    $('#clock').textContent = s.sync ? new Date(s.now * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  } catch (e) {
+    if (++pollFails > 1) setConn('lost');
+  }
+  if (my === pollSeq) pollTimer = setTimeout(poll, document.hidden ? 6000 : 2000);
+}
+
+/* ================================================================ navigation */
+function go(v) {
+  if (!$('#v-' + v)) v = 'dash';
+  view = v; store('hp.view', v);
+  if (location.hash !== '#' + v) history.replaceState(null, '', '#' + v);
+  $$('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if (v === 'dash') { setTimeout(() => { Dial.resize(); if (S) setSeg(S.mode); liveChart.resize(); }, 0); }
+  if (v === 'tune') setTimeout(() => { tuneChart.resize(); tuneChart.set(TUNE, 2); drawTape(); }, 0);
+  if (v === 'ana') { if (!ANA.loaded) loadAnalysis(); else setTimeout(() => { anaChart.resize(); drawHisto(ANA.stats); drawRhythm(); }, 0); }
+  scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
+}
+
+/* ================================================================ simulator (demo mode) */
+const Sim = {
+  init() {
+    const now = Math.floor(Date.now() / 1000);
+    this.c = { sp: 55, mode: 1, kp: 7, ki: .035, kd: 25, win: 20, mon: 3, moff: 5, band: .8, rule: 1, ku: 0, tu: 0, alo: 25, ahi: 85, toff: 0, hoff: 0, flip: 0, tz: 0, ssid: 'HygroPilot', pass: 'hygro1234', fw: '1.0.0-demo', flash: 4194304, chip: 0xC0FFEE };
+    this.H = 53.5; this.hf = 53.5; this.T = 23.2; this.eff = 0; this.effD = 0; this.u = 0; this.hr = 0; this.dr = 0; this.hd = 0; this.dd = 0;
+    this.P = { i: 30, last: null, df: 0, p: 0, d: 0 }; this.hon = 3120; this.don = 0; this.hsw = 164; this.dsw = 0; this.up = 97240;
+    this.at = { s: 0, c: 0, el: 0, hi: 0, a: 0, per: 0, m: '' }; this.T_ = null;
+    this.f = []; this.m = []; this.l = []; this.acc = { f: [], m: [], l: [] };
+    const amb = ts => 41 + 7 * Math.sin(ts / 86400 * 6.283 - 2.2) + 2.5 * Math.sin(ts / 4700);
+    const syn = (ts, iv) => {
+      const sp = ts < now - 4 * 86400 ? 50 : ts < now - 30 * 3600 ? 52 : 55;
+      const dist = -5 * Math.exp(-((((ts / 3600) % 23) - 11) ** 2) / 2);
+      const h = sp + dist + 1.1 * Math.sin(ts / 700) * (iv > 60 ? .4 : 1) + (Math.random() - .5) * .7;
+      const t = 22.2 + 2.1 * Math.sin(ts / 86400 * 6.283 - 1.9) + (Math.random() - .5) * .25;
+      const o = Math.round(clamp((sp - amb(ts)) * 4.5 + (sp - h) * 7, 0, 100));
+      return { ts, t, h, o, sp };
+    };
+    for (let ts = now - 7 * 86400; ts < now; ts += 1800) this.l.push(syn(ts, 1800));
+    for (let ts = now - 86400; ts < now; ts += 60) this.m.push(syn(ts, 60));
+    for (let ts = now - 1200; ts < now; ts += 5) this.f.push(syn(ts, 5));
+    setInterval(() => this.step(), 1000);
+  },
+  step() {
+    const c = this.c, now = Math.floor(Date.now() / 1000); this.up++;
+    const amb = 40 + 6 * Math.sin(now / 3000);
+    this.eff += ((this.hr ? 1 : 0) - this.eff) * .06; this.effD += ((this.dr ? 1 : 0) - this.effD) * .05;
+    this.H += this.eff * .1 - this.effD * .09 - (this.H - amb) * .003 + (Math.random() - .5) * .025;
+    this.H = clamp(this.H, 5, 99);
+    this.T += (22.8 + 1.4 * Math.sin(now / 7200) - this.T) * .01;
+    if (this.up % 2 === 0) this.control(2);
+    const ph = this.up % c.win;
+    const want = d => d >= 99.5 || (d > .5 && ph < d / 100 * c.win);
+    const nh = want(this.hd) ? 1 : 0, nd = want(this.dd) ? 1 : 0;
+    if (nh && !this.hr) this.hsw++; if (nd && !this.dr) this.dsw++;
+    this.hr = nh; this.dr = nd; this.hon += nh; this.don += nd;
+    const s = { t: this.T, h: this.hr0, o: this.u };
+    if (this.hr0 == null) return;
+    for (const [k, iv, n] of [['f', 5, 240], ['m', 60, 1440], ['l', 1800, 336]]) {
+      this.acc[k].push(s);
+      if (this.up % iv === 0) {
+        const a = this.acc[k], avg = key => a.reduce((x, p) => x + p[key], 0) / a.length;
+        this[k].push({ ts: now, t: avg('t'), h: avg('h'), o: Math.round(avg('o')), sp: c.sp }); this.acc[k] = [];
+        if (this[k].length > n) this[k].shift();
+      }
+    }
+  },
+  control(dt) {
+    const c = this.c;
+    const h = Math.round((this.H + (Math.random() - .5) * .15) * 10) / 10; this.hr0 = h;
+    this.hf += (h - this.hf) * .5;
+    let u = 0;
+    if (this.at.s === 1) u = this.tune(this.hf);
+    else if (c.mode) {
+      const P = this.P, rev = c.mode === 2, err = rev ? this.hf - c.sp : c.sp - this.hf, mn = c.mode === 3 ? -100 : 0;
+      let sl = P.last == null ? 0 : (this.hf - P.last) / dt; P.last = this.hf; if (rev) sl = -sl;
+      P.df += .35 * (sl - P.df); P.p = c.kp * err; P.d = -c.kd * P.df;
+      const iN = P.i + c.ki * err * dt, out = P.p + iN + P.d;
+      if (!((out > 100 && err > 0) || (out < mn && err < 0))) P.i = iN;
+      P.i = clamp(P.i, mn, 100); u = clamp(P.p + P.i + P.d, mn, 100);
+    } else { this.P.p = this.P.i = this.P.d = 0; }
+    let hd = 0, dd = 0;
+    if (c.mode === 1) hd = Math.max(u, 0); else if (c.mode === 2) dd = Math.max(u, 0); else if (c.mode === 3) { hd = Math.max(u, 0); dd = Math.max(-u, 0); }
+    if (this.hf >= c.ahi) hd = 0; if (this.hf <= c.alo) dd = 0;
+    this.hd = hd; this.dd = dd; this.u = hd - dd;
+  },
+  tune(pv) {
+    const T = this.T_, A = this.at, e = T.rev ? pv - T.sp : T.sp - pv;
+    T.cmax = Math.max(T.cmax, pv); T.cmin = Math.min(T.cmin, pv);
+    if (T.high && e < -T.band) { T.high = false; T.sw = this.up; }
+    else if (!T.high && e > T.band) {
+      T.high = true; T.sw = this.up;
+      if (T.have) {
+        A.per = this.up - T.rise; A.a = (T.cmax - T.cmin) / 2; A.c++;
+        T.amps.push(A.a); T.pers.push(A.per); if (T.amps.length > 3) { T.amps.shift(); T.pers.shift(); }
+        if (A.c >= 3) {
+          const avg = v => v.reduce((x, y) => x + y, 0) / v.length, spr = v => (Math.max(...v) - Math.min(...v)) / avg(v);
+          const conv = spr(T.amps) < .2 && spr(T.pers) < .2;
+          if (conv || A.c >= 8) {
+            const a = avg(T.amps), ae = a > T.band * 1.1 ? Math.sqrt(a * a - T.band * T.band) : a;
+            this.c.ku = 4 * ((T.hi - T.lo) / 2) / (Math.PI * ae); this.c.tu = avg(T.pers);
+            Object.assign(this.c, gains(this.c.rule, this.c.ku, this.c.tu));
+            A.s = 2; A.m = conv ? 'Tuned successfully' : 'Tuned (noisy cycles)'; A.el = this.up - T.start;
+            this.P.i = 0; this.P.last = null; return 0;
+          }
+        }
+      }
+      T.have = true; T.rise = this.up; T.cmax = T.cmin = pv;
+    }
+    A.el = this.up - T.start; A.hi = T.high ? 1 : 0;
+    if (A.el > 14400) { A.s = 3; A.m = 'Timed out'; return 0; }
+    return T.high ? T.hi : T.lo;
+  },
+  csv(k) {
+    const iv = { f: 5, m: 60, l: 1800 }[k], a = this[k];
+    return `#iv=${iv},now=${Math.floor(Date.now() / 1000)},sync=1,n=${a.length}\n` + a.map(p => `${p.ts},${Math.round(p.t * 10)},${Math.round(p.h * 10)},${p.o},${Math.round(p.sp * 2)}`).join('\n');
+  },
+  async get(p) {
+    const c = this.c;
+    if (p.startsWith('/api/history')) return this.csv((p.match(/r=(\w)/) || [])[1] || 'm');
+    if (p === '/api/config') return { ...c };
+    const h = this.hr0 == null ? this.H : this.hr0;
+    return {
+      v: c.fw, ok: 1, ev: 1, t: +this.T.toFixed(2), h, hf: +this.hf.toFixed(2), dp: +dewPoint(this.T, h).toFixed(1), sp: c.sp, mode: c.mode,
+      u: +this.u.toFixed(1), hd: +this.hd.toFixed(1), dd: +this.dd.toFixed(1), hr: this.hr, dr: this.dr,
+      p: this.P.p, i: this.P.i, d: this.P.d, kp: c.kp, ki: c.ki, kd: c.kd, ku: c.ku, tu: c.tu, rule: c.rule, win: c.win,
+      al: this.hf >= c.ahi ? 2 : this.hf <= c.alo ? 1 : 0, at: { ...this.at },
+      hon: this.hon, don: this.don, hsw: this.hsw, dsw: this.dsw, now: Math.floor(Date.now() / 1000), sync: 1, up: this.up, heap: 23480, cli: 1,
+    };
+  },
+  async post(p, d) {
+    const c = this.c, num = k => d[k] !== undefined && d[k] !== '' ? +d[k] : undefined;
+    const set = (k, v, lo, hi) => { if (v !== undefined && !isNaN(v)) c[k] = clamp(v, lo, hi); };
+    switch (p) {
+      case '/api/set':
+        if (num('sp') !== undefined) c.sp = clamp(Math.round(num('sp') * 2) / 2, 5, 95);
+        if (num('mode') !== undefined && num('mode') !== c.mode) { if (this.at.s === 1) Object.assign(this.at, { s: 3, m: 'Mode changed' }); c.mode = num('mode'); this.P.i = 0; this.P.last = null; }
+        break;
+      case '/api/pid': set('kp', num('kp'), 0, 1000); set('ki', num('ki'), 0, 100); set('kd', num('kd'), 0, 1e5); set('win', num('win'), 2, 600); set('mon', num('mon'), 0, 600); set('moff', num('moff'), 0, 1800); break;
+      case '/api/tune':
+        set('rule', num('rule'), 0, 5);
+        if (d.act === 'start') {
+          if (!c.mode) throw new Error('Select a mode first');
+          c.band = clamp(num('band') || c.band, .1, 10);
+          const pv = this.hf, rev = c.mode === 2, e = rev ? pv - c.sp : c.sp - pv;
+          this.T_ = { sp: c.sp, band: c.band, hi: 100, lo: c.mode === 3 ? -100 : 0, rev, high: e > 0, have: false, cmax: pv, cmin: pv, start: this.up, sw: this.up, rise: 0, amps: [], pers: [] };
+          this.at = { s: 1, c: 0, el: 0, hi: e > 0 ? 1 : 0, a: 0, per: 0, m: 'Forcing oscillation' };
+        } else if (d.act === 'stop') { if (this.at.s === 1) Object.assign(this.at, { s: 3, m: 'Stopped by user' }); }
+        else if (d.act === 'apply') { if (!c.ku) throw new Error('No auto-tune result yet'); Object.assign(c, gains(c.rule, c.ku, c.tu)); }
+        break;
+      case '/api/settings':
+        set('alo', num('alo'), 0, 99); set('ahi', num('ahi'), 1, 100); set('hoff', num('hoff'), -20, 20); set('toff', num('toff'), -10, 10);
+        if (d.flip !== undefined) c.flip = +d.flip;
+        if (d.ssid !== undefined) { if (!d.ssid) throw new Error('SSID must be 1-32 characters'); c.ssid = d.ssid; c.pass = d.pass; return { ok: 1, restart: 1 }; }
+        break;
+      case '/api/clear': this.f = []; this.m = []; this.l = []; break;
+      case '/api/factory': case '/api/reboot': case '/api/time': break;
+      default: throw new Error('Unknown endpoint');
+    }
+    return { ok: 1 };
+  },
+};
+
+/* ================================================================ boot */
+async function boot() {
+  Mist.init(); Dial.init(); initTune(); initAnalysis(); initSettings();
+  liveChart = new Chart($('#liveChart'), { series: SERIES, height: 240, noZoom: true });
+  liveChart.legend($('#liveLegend'));
+  tuneChart = new Chart($('#tuneChart'), { series: SERIES.filter(s => s.k !== 't'), height: 200, noZoom: true, empty: 'Waiting for the first readings…' });
+  anaChart = new Chart($('#anaChart'), { series: SERIES, height: 340 });
+  anaChart.legend($('#anaLegend'));
+  anaChart.onZoom = z => { $('#zoomHint').innerHTML = z ? '<button class="btn" id="zReset" style="padding:4px 10px;font-size:12px">Reset zoom</button>' : 'Drag across the chart to zoom · double-click to reset'; if (z) $('#zReset').onclick = () => anaChart.reset(); };
+
+  $('#presets').innerHTML = PRESETS.map(([e, n, v]) => `<button class="preset" data-v="${v}">${e} ${n}<b>${v}%</b></button>`).join('');
+  $('#presets').onclick = e => { const b = e.target.closest('.preset'); if (!b) return; Dial.setSp(+b.dataset.v); commitSp(+b.dataset.v, 0); };
+  const nudge = d => { Dial.setSp(Dial.sp + d); commitSp(Dial.sp, 800); };
+  for (const [id, d] of [['#spMinus', -.5], ['#spPlus', .5]]) {
+    const b = $(id); let t1, t2;
+    const stop = () => { clearTimeout(t1); clearInterval(t2); };
+    b.addEventListener('pointerdown', () => { nudge(d); t1 = setTimeout(() => t2 = setInterval(() => nudge(d), 90), 420); });
+    b.addEventListener('pointerup', stop); b.addEventListener('pointerleave', stop); b.addEventListener('pointercancel', stop);
+  }
+  $('#modeSeg').onclick = async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const m = +b.dataset.m; modePending = true; setSeg(m);
+    try { await API.post('/api/set', { mode: m }); toast('Mode: ' + MODES[m]); }
+    catch (err) { toast(err.message, 'err'); }
+    setTimeout(() => modePending = false, 2500);
+  };
+  $('#resBody').onclick = async e => {
+    const b = e.target.closest('[data-apply]'); if (!b) return;
+    try { await API.post('/api/tune', { act: 'apply', rule: b.dataset.apply }); toast(RULES[b.dataset.apply][0] + ' gains applied'); await loadConfig(); poll(); }
+    catch (err) { toast(err.message, 'err'); }
+  };
+  $$('#tabs button').forEach(b => b.onclick = () => go(b.dataset.v));
+  addEventListener('resize', () => { if (S) setSeg(S.mode); if (view === 'ana') { drawHisto(ANA.stats); drawRhythm(); } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+
+  // Find the controller; fall back to the simulator when the page runs anywhere else.
+  const forceDemo = location.protocol === 'file:' || /[?&]demo\b/.test(location.search);
+  const onDevice = /^(192\.168\.4\.1|hygropilot\.local)(:\d+)?$/i.test(location.host);
+  if (forceDemo) API.demo = true;
+  else {
+    let found = false;
+    for (let i = 0; i < 3 && !found; i++) {
+      try { const r = await API.req('/api/status'); found = r && typeof r === 'object' && 'mode' in r; } catch (e) { }
+    }
+    if (!found && !onDevice) API.demo = true;
+  }
+  if (API.demo) { Sim.init(); $('#demoBar').classList.add('on'); $('#footIp').textContent = 'demo'; }
+  else $('#footIp').textContent = location.host;
+  await loadConfig();
+  if (!API.demo) {
+    try { const { rows } = parseCSV(await API.get('/api/history?r=f')); LIVE.push(...rows); } catch (e) { }
+  } else LIVE.push(...Sim.f.map(p => ({ ...p })));
+  go(location.hash.slice(1) || store('hp.view') || 'dash');
+  poll();
+}
+boot();
+</script>
+</body>
+</html>
