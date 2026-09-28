@@ -107,11 +107,11 @@ With no controller to talk to, the page switches to **demo mode**. A simulated r
 | Part | Notes |
 |---|---|
 | NodeMCU v2/v3 **or** Wemos D1 mini | Any ESP8266 with 4 MB flash |
-| DHT22 (AM2302) | Or an SHT31. Switch with `SENSOR_TYPE` in [config.h](HumidityController/config.h) |
+| DHT11 or DHT22 (AM2302) | Or an SHT31. Pick the model with `DHT_MODEL` (default `DHT11`) and the sensor with `SENSOR_TYPE` in [config.h](HumidityController/config.h) |
 | SSD1306 OLED, 128×64, I²C | 0.96", address `0x3C` |
 | 1 or 2 channel relay module | Or a logic-level MOSFET for a USB mister. The 2nd channel is for a dehumidifier or exhaust fan. |
 | Humidifier | It must run on its own when power is applied |
-| 10 kΩ resistor | DHT22 data pull-up (many breakout boards already have it) |
+| 10 kΩ resistor | DHT data pull-up (many breakout boards already have it) |
 
 ### Wiring
 
@@ -123,7 +123,7 @@ flowchart LR
 
     ESP["<b>ESP8266</b><br/>NodeMCU / D1 mini"]:::mcu
     OLED["OLED SSD1306<br/>I²C 0x3C"]:::part
-    DHT["DHT22<br/>(+10k pull-up to 3V3)"]:::part
+    DHT["DHT11 / DHT22<br/>(+10k pull-up to 3V3)"]:::part
     R1["Relay IN1"]:::out
     R2["Relay IN2"]:::out
     HUM(["💧 Humidifier"]):::out
@@ -131,7 +131,7 @@ flowchart LR
 
     ESP -- "D1 (GPIO5) SCL" --> OLED
     ESP -- "D2 (GPIO4) SDA" --> OLED
-    ESP -- "D7 (GPIO13)" --> DHT
+    ESP -- "D4 (GPIO2)" --> DHT
     ESP -- "D5 (GPIO14)" --> R1 --> HUM
     ESP -- "D6 (GPIO12)" --> R2 --> DEH
 ```
@@ -140,11 +140,11 @@ flowchart LR
 |---|---|---|
 | D1 | 5 | OLED **SCL** (and SHT31 SCL) |
 | D2 | 4 | OLED **SDA** (and SHT31 SDA) |
-| D7 | 13 | DHT22 **DATA** |
+| D4 | 2 | DHT **DATA** (the on-board LED shares this pin, so it is disabled) |
 | D5 | 14 | Relay **IN1**: humidifier |
 | D6 | 12 | Relay **IN2**: dehumidifier / fan (optional) |
 | D3 | 0 | On-board FLASH button: flips OLED pages |
-| 3V3 / VIN / GND | – | OLED and DHT22 on 3V3, relay module on VIN (5 V), common ground |
+| 3V3 / VIN / GND | – | OLED and DHT on 3V3, relay module on VIN (5 V), common ground |
 
 Most blue relay boards switch **on** when their input is pulled **low**. That is the default (`RELAY_ACTIVE_LOW 1`). For an active-high board or a MOSFET, set it to `0`.
 
@@ -322,7 +322,7 @@ Check SDA/SCL (D2/D1) and the address. Most modules use <code>0x3C</code>. A few
 <details>
 <summary><b>Sensor fault / humidity reads "--".</b></summary>
 <br>
-Check the DHT22 data wire (D7) and the 10 kΩ pull-up to 3V3. After 5 failed reads the outputs are switched off on purpose.
+Check the DHT data wire (D4) and the 10 kΩ pull-up to 3V3. After 5 failed reads the outputs are switched off on purpose.
 </details>
 
 <details>

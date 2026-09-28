@@ -43,7 +43,7 @@ ESP8266WebServer server(80);
 DNSServer dns;
 Adafruit_SSD1306 oled(OLED_W, OLED_H, &Wire, -1);
 #if SENSOR_TYPE == SENSOR_DHT22
-DHT dht(PIN_DHT, DHT22);
+DHT dht(PIN_DHT, DHT_MODEL);
 #else
 Adafruit_SHT31 sht;
 #endif
@@ -479,6 +479,7 @@ void handleButton() {
 }
 
 void updateLed() {
+  if (PIN_LED < 0) return;
   uint32_t phase = millis() % 2000;
   bool on = live.ok ? phase < 40 : phase < 1000;  // heartbeat, slow blink on fault
   if (humOut.on || dehOut.on) on = !on;
@@ -722,8 +723,10 @@ void setup() {
   humOut.begin();  // relays off as early as possible
   dehOut.begin();
   pinMode(PIN_BUTTON, INPUT_PULLUP);
-  pinMode(PIN_LED, OUTPUT);
-  digitalWrite(PIN_LED, HIGH);
+  if (PIN_LED >= 0) {
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
+  }
 
   Serial.begin(115200);
   Serial.println(F("\n\nHygroPilot " FW_VERSION));
