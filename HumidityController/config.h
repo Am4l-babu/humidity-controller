@@ -8,19 +8,20 @@
 // ---- Sensor (pick ONE) ------------------------------------------------
 #define SENSOR_DHT22 1
 #define SENSOR_SHT31 2
-#define SENSOR_TYPE  SENSOR_DHT22
+#define SENSOR_SHT41 3
+#define SENSOR_TYPE  SENSOR_SHT41
 // Model used when SENSOR_TYPE is SENSOR_DHT22 (the DHT family): DHT11 or DHT22.
 #define DHT_MODEL    DHT11
 
 // ---- Pins (GPIO numbers; NodeMCU / D1 mini silkscreen in brackets) ----
-#define PIN_SDA           4   // D2  OLED SDA (+ SHT31)
-#define PIN_SCL           5   // D1  OLED SCL (+ SHT31)
-#define PIN_DHT           2   // D4  DHT data (10k pull-up to 3V3)
+#define PIN_SDA           4   // D2  OLED SDA (+ SHT31 / SHT41)
+#define PIN_SCL           5   // D1  OLED SCL (+ SHT31 / SHT41)
+#define PIN_DHT           2   // D4  DHT data (10k pull-up to 3V3), only used with SENSOR_DHT22
 #define PIN_HUMIDIFIER   14   // D5  relay / MOSFET driving the humidifier
 #define PIN_DEHUMIDIFIER 12   // D6  relay driving a dehumidifier or exhaust fan
 #define PIN_BUTTON        0   // D3  on-board FLASH button: next OLED page
-#define PIN_LED          -1   // on-board LED (active LOW) is on GPIO2 / D4, shared with the DHT data
-                              // pin, so it is disabled. Set to 2 only if the DHT is on another pin.
+#define PIN_LED           2   // D4  on-board LED (active LOW). It shares GPIO2 with the DHT data pin,
+                              // so set this to -1 when using a DHT sensor on D4.
 
 // Most cheap relay boards switch ON when their input is pulled LOW.
 // Set to 0 for active-HIGH relay boards or a logic-level MOSFET.

@@ -107,11 +107,11 @@ With no controller to talk to, the page switches to **demo mode**. A simulated r
 | Part | Notes |
 |---|---|
 | NodeMCU v2/v3 **or** Wemos D1 mini | Any ESP8266 with 4 MB flash |
-| DHT11 or DHT22 (AM2302) | Or an SHT31. Pick the model with `DHT_MODEL` (default `DHT11`) and the sensor with `SENSOR_TYPE` in [config.h](HumidityController/config.h) |
+| SHT41 (default), SHT31, DHT22 or DHT11 | Pick the sensor with `SENSOR_TYPE` in [config.h](HumidityController/config.h). For a DHT, also set `DHT_MODEL`. The SHT41/SHT31 are I²C (address `0x44`) and far more accurate than a DHT. |
 | SSD1306 OLED, 128×64, I²C | 0.96", address `0x3C` |
 | 1 or 2 channel relay module | Or a logic-level MOSFET for a USB mister. The 2nd channel is for a dehumidifier or exhaust fan. |
 | Humidifier | It must run on its own when power is applied |
-| 10 kΩ resistor | DHT data pull-up (many breakout boards already have it) |
+| 10 kΩ resistor | DHT data pull-up, only for a DHT sensor (many breakout boards already have it) |
 
 ### Wiring
 
@@ -123,7 +123,7 @@ flowchart LR
 
     ESP["<b>ESP8266</b><br/>NodeMCU / D1 mini"]:::mcu
     OLED["OLED SSD1306<br/>I²C 0x3C"]:::part
-    DHT["DHT11 / DHT22<br/>(+10k pull-up to 3V3)"]:::part
+    SENS["SHT41 (I²C 0x44)<br/>or DHT on D4"]:::part
     R1["Relay IN1"]:::out
     R2["Relay IN2"]:::out
     HUM(["💧 Humidifier"]):::out
@@ -131,20 +131,20 @@ flowchart LR
 
     ESP -- "D1 (GPIO5) SCL" --> OLED
     ESP -- "D2 (GPIO4) SDA" --> OLED
-    ESP -- "D4 (GPIO2)" --> DHT
+    ESP -- "D1 / D2 (shared I²C bus)" --> SENS
     ESP -- "D5 (GPIO14)" --> R1 --> HUM
     ESP -- "D6 (GPIO12)" --> R2 --> DEH
 ```
 
 | ESP8266 pin | GPIO | Connects to |
 |---|---|---|
-| D1 | 5 | OLED **SCL** (and SHT31 SCL) |
-| D2 | 4 | OLED **SDA** (and SHT31 SDA) |
-| D4 | 2 | DHT **DATA** (the on-board LED shares this pin, so it is disabled) |
+| D1 | 5 | OLED **SCL** (and SHT41 / SHT31 SCL) |
+| D2 | 4 | OLED **SDA** (and SHT41 / SHT31 SDA) |
+| D4 | 2 | On-board LED. Only used as DHT **DATA** if you pick a DHT (then set `PIN_LED` to -1) |
 | D5 | 14 | Relay **IN1**: humidifier |
 | D6 | 12 | Relay **IN2**: dehumidifier / fan (optional) |
 | D3 | 0 | On-board FLASH button: flips OLED pages |
-| 3V3 / VIN / GND | – | OLED and DHT on 3V3, relay module on VIN (5 V), common ground |
+| 3V3 / VIN / GND | – | OLED and sensor on 3V3, relay module on VIN (5 V), common ground |
 
 Most blue relay boards switch **on** when their input is pulled **low**. That is the default (`RELAY_ACTIVE_LOW 1`). For an active-high board or a MOSFET, set it to `0`.
 
@@ -169,7 +169,7 @@ Before each build, `tools/embed_web.py` gzips `web/index.html` into the firmware
 <summary><b>Arduino IDE</b></summary>
 
 1. Install the **esp8266** board package (*Boards Manager → "esp8266 by ESP8266 Community"*).
-2. Install the libraries: **Adafruit SSD1306**, **Adafruit GFX**, **DHT sensor library**, **Adafruit Unified Sensor**, and **Adafruit SHT31** if you use that sensor.
+2. Install the libraries: **Adafruit SSD1306**, **Adafruit GFX**, **DHT sensor library**, **Adafruit Unified Sensor**, and **Adafruit SHT4x** (SHT41) or **Adafruit SHT31**, depending on your sensor.
 3. Open `HumidityController/HumidityController.ino`.
 4. Choose *NodeMCU 1.0* or *LOLIN(WEMOS) D1 mini* with **Flash Size: 4MB (FS:1MB)**.
 5. Upload.
@@ -192,7 +192,7 @@ The web page is already embedded in `HumidityController/webpage.h`. If you edit 
 
 ```mermaid
 flowchart LR
-    S["🌡️ DHT22<br/>every 2 s"] --> F["Low-pass<br/>filter"]
+    S["🌡️ SHT41<br/>every 2 s"] --> F["Low-pass<br/>filter"]
     F --> P{{"PID<br/>P + I + D"}}
     SP(["🎯 Target<br/>from the dial"]) --> P
     P -- "output −100…+100 %" --> M["Mode<br/>split"]
@@ -322,7 +322,7 @@ Check SDA/SCL (D2/D1) and the address. Most modules use <code>0x3C</code>. A few
 <details>
 <summary><b>Sensor fault / humidity reads "--".</b></summary>
 <br>
-Check the DHT data wire (D4) and the 10 kΩ pull-up to 3V3. After 5 failed reads the outputs are switched off on purpose.
+Check the sensor wiring (SDA/SCL on D2/D1, or the DHT data wire and its 10 kΩ pull-up if you use a DHT). After 5 failed reads the outputs are switched off on purpose.
 </details>
 
 <details>

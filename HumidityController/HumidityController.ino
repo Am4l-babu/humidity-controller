@@ -1,7 +1,7 @@
 /*
  * HygroPilot — ESP8266 PID humidity controller
  * ---------------------------------------------------------------
- *  - DHT22 (or SHT31) sensor, SSD1306 128x64 OLED
+ *  - SHT41 (or SHT31 / DHT) sensor, SSD1306 128x64 OLED
  *  - Humidifier relay (+ optional dehumidifier relay) driven by a PID
  *    loop through time-proportioning outputs
  *  - Relay (Astrom-Hagglund) auto-tune with selectable tuning rules
@@ -27,6 +27,8 @@
 #include <DHT.h>
 #elif SENSOR_TYPE == SENSOR_SHT31
 #include <Adafruit_SHT31.h>
+#elif SENSOR_TYPE == SENSOR_SHT41
+#include <Adafruit_SHT4x.h>
 #else
 #error "Select a sensor in config.h"
 #endif
@@ -44,8 +46,10 @@ DNSServer dns;
 Adafruit_SSD1306 oled(OLED_W, OLED_H, &Wire, -1);
 #if SENSOR_TYPE == SENSOR_DHT22
 DHT dht(PIN_DHT, DHT_MODEL);
-#else
+#elif SENSOR_TYPE == SENSOR_SHT31
 Adafruit_SHT31 sht;
+#else
+Adafruit_SHT4x sht4;
 #endif
 
 PID pid;
@@ -149,8 +153,15 @@ void restoreHistory() {
 void sensorBegin() {
 #if SENSOR_TYPE == SENSOR_DHT22
   dht.begin();
-#else
+#elif SENSOR_TYPE == SENSOR_SHT31
   sht.begin(0x44);
+#else
+  if (sht4.begin(&Wire)) {
+    sht4.setPrecision(SHT4X_HIGH_PRECISION);
+    sht4.setHeater(SHT4X_NO_HEATER);
+  } else {
+    Serial.println(F("SHT41 not found"));
+  }
 #endif
 }
 
@@ -158,9 +169,14 @@ bool readSensor(float &t, float &h) {
 #if SENSOR_TYPE == SENSOR_DHT22
   h = dht.readHumidity();
   t = dht.readTemperature();
-#else
+#elif SENSOR_TYPE == SENSOR_SHT31
   t = sht.readTemperature();
   h = sht.readHumidity();
+#else
+  sensors_event_t hev, tev;
+  if (!sht4.getEvent(&hev, &tev)) return false;
+  h = hev.relative_humidity;
+  t = tev.temperature;
 #endif
   if (isnan(t) || isnan(h) || h < 0 || h > 100.5f || t < -40 || t > 85) return false;
   t += cfg.tempOffset;
@@ -181,12 +197,14 @@ const char *startTune(float band) {
 void controlStep(float dt) {
   float t, h;
   if (readSensor(t, h)) {
+    Serial.printf("Sensor: %.2f C  %.1f %%RH\n", t, h);
     live.t = t;
     live.h = h;
     live.hf = (!live.ok || isnan(live.hf)) ? h : live.hf + 0.5f * (h - live.hf);
     live.fails = 0;
     live.ok = live.everOk = true;
   } else {
+    Serial.printf("Sensor read failed (%u in a row)\n", live.fails + 1);
     if (live.fails < 255) live.fails++;
     if (live.fails >= SENSOR_FAIL_LIMIT && live.ok) {
       live.ok = false;
